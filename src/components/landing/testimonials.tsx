@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { Quote } from "lucide-react";
 import { TESTIMONIALS } from "@/lib/constants";
 
@@ -125,20 +124,6 @@ export function Testimonials() {
         <div className="relative mx-auto mt-4 h-[460px] w-full max-w-5xl sm:h-[520px]">
           <div className="pointer-events-none absolute inset-x-[10%] bottom-[8%] h-28 rounded-[100%] bg-primary/10 blur-3xl" />
 
-          <div className="absolute left-1/2 top-[82%] z-50 -translate-x-1/2 -translate-y-1/2">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border border-border/70 bg-background shadow-2xl shadow-primary/25 ring-4 ring-background sm:h-28 sm:w-28">
-              <Image
-                src="/logo.png"
-                alt="Patron Beni Kap"
-                width={256}
-                height={256}
-                quality={100}
-                priority
-                className="h-14 w-14 object-contain sm:h-16 sm:w-16"
-              />
-            </div>
-          </div>
-
           <div className="absolute inset-0">
             {ITEMS.map((t, i) => {
               const deg = i * angleStep - rotation;
@@ -155,7 +140,7 @@ export function Testimonials() {
               return (
                 <div
                   key={t.name}
-                  className="absolute left-1/2 top-[42%]"
+                  className="absolute left-1/2 top-[48%]"
                   style={{
                     width,
                     zIndex: Math.round(depth * 40),
