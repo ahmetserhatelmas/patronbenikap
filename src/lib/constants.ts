@@ -188,4 +188,34 @@ export const TESTIMONIALS = [
     text: "WhatsApp ve telefonum profilimde. Firmalar direkt ulaşıyor. Çok pratik.",
     city: "İzmir",
   },
+  {
+    name: "Elif Koç",
+    role: "Garson",
+    text: "Vardiyalı çalışabileceğimi yazdım, ertesi gün iki cafe aradı. Patron beni kapmış gibi!",
+    city: "Antalya",
+  },
+  {
+    name: "Burak Şahin",
+    role: "Restoran İşletmecisi",
+    text: "Favoriye aldım, mesaj attım, aynı gün görüştük. İşe alım hiç bu kadar hızlı olmamıştı.",
+    city: "Bursa",
+  },
+  {
+    name: "Zeynep Arslan",
+    role: "Kuaför",
+    text: "Profilimi paylaştım, tanıdıklarım da gördü. Hem müşteri hem iş teklifi geldi.",
+    city: "Eskişehir",
+  },
+  {
+    name: "Hakan Öztürk",
+    role: "Şantiye Şefi",
+    text: "Tecrübeli ustaları buradan buluyoruz. CV yığını yok, net profil var.",
+    city: "Konya",
+  },
+  {
+    name: "Selin Aydın",
+    role: "Satış Danışmanı",
+    text: "İlan aramayı bıraktım. Firmalar bana yazıyor — tam aradığım sistem.",
+    city: "Adana",
+  },
 ] as const;
