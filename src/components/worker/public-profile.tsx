@@ -253,6 +253,14 @@ export function PublicProfileView({
             value={worker.currently_working ? "Çalışıyor" : "Açık"}
           />
           <Detail
+            label="Vardiya"
+            value={
+              (worker as Worker & { shift_work?: boolean }).shift_work
+                ? "Vardiyalı çalışmaya uygun"
+                : undefined
+            }
+          />
+          <Detail
             label="Diller"
             value={worker.languages?.join(", ")}
           />

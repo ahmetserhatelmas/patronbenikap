@@ -69,7 +69,7 @@ export default async function WorkerPublicPage({ params }: PageProps) {
     notFound();
   }
 
-  // Increment view count (fire and forget for companies)
+  // Increment view + notify worker (with company name)
   if (profile?.role === "company" && worker.profile_id !== profile.id) {
     await supabase
       .from("workers")
@@ -78,11 +78,18 @@ export default async function WorkerPublicPage({ params }: PageProps) {
 
     const { data: company } = await supabase
       .from("companies")
-      .select("id")
+      .select("id, name")
       .eq("profile_id", profile.id)
       .maybeSingle();
 
     if (company) {
+      const { data: previous } = await supabase
+        .from("recently_viewed")
+        .select("id, viewed_at")
+        .eq("company_id", company.id)
+        .eq("worker_id", worker.id)
+        .maybeSingle();
+
       await supabase.from("recently_viewed").upsert(
         {
           company_id: company.id,
@@ -92,13 +99,21 @@ export default async function WorkerPublicPage({ params }: PageProps) {
         { onConflict: "company_id,worker_id" }
       );
 
-      await supabase.from("notifications").insert({
-        user_id: worker.profile_id,
-        type: "view",
-        title: "Profiliniz görüntülendi",
-        body: "Bir firma profilinizi inceledi.",
-        link: "/isci/bildirimler",
-      });
+      // Notify on first view or if last view was > 12 hours ago
+      const shouldNotify =
+        !previous ||
+        Date.now() - new Date(previous.viewed_at).getTime() > 12 * 60 * 60 * 1000;
+
+      if (shouldNotify) {
+        await supabase.from("notifications").insert({
+          user_id: worker.profile_id,
+          type: "view",
+          title: `${company.name} seni inceledi`,
+          body: `${company.name} profiline baktı. Belki patron seni kapmak üzeredir!`,
+          link: "/isci/bildirimler",
+          metadata: { company_id: company.id, company_name: company.name },
+        });
+      }
     }
   }
 

@@ -25,10 +25,10 @@ export const forgotPasswordSchema = z.object({
 export const workerProfileSchema = z.object({
   first_name: z.string().min(2, "Ad gerekli"),
   last_name: z.string().min(2, "Soyad gerekli"),
-  age: z.coerce.number().min(16).max(80).optional().nullable(),
-  city: z.string().optional().nullable(),
+  age: z.coerce.number().min(16, "Yaş en az 16 olmalı").max(80).optional().nullable(),
+  city: z.string().min(1, "Şehir seçmelisin"),
   district: z.string().optional().nullable(),
-  profession_id: z.string().uuid().optional().nullable(),
+  profession_id: z.string().uuid("Meslek seçmelisin"),
   experience_years: z.coerce.number().min(0).max(50).default(0),
   education: z
     .enum([
@@ -49,16 +49,17 @@ export const workerProfileSchema = z.object({
     .optional()
     .nullable(),
   currently_working: z.boolean().default(false),
+  shift_work: z.boolean().default(false),
   expected_salary: z.coerce.number().min(0).optional().nullable(),
   availability: z
     .enum(["hemen", "1_hafta", "2_hafta", "1_ay", "esnek"])
     .optional()
     .nullable(),
-  about_me: z.string().max(2000).optional().nullable(),
+  about_me: z.string().min(20, "Hakkımda en az 20 karakter olmalı").max(2000),
   specializations: z.array(z.string()).default([]),
   whatsapp: z.string().optional().nullable(),
-  phone: z.string().optional().nullable(),
-  email: z.string().email().optional().nullable().or(z.literal("")),
+  phone: z.string().min(10, "Telefon gerekli"),
+  email: z.string().email("Geçerli e-posta girin").optional().nullable().or(z.literal("")),
   is_visible: z.boolean().default(true),
   skill_ids: z.array(z.string()).default([]),
 });

@@ -85,15 +85,21 @@ export async function sendMessage(
   if (conv) {
     const company = conv.company as unknown as { profile_id: string; name: string };
     const worker = conv.worker as unknown as { profile_id: string; first_name: string };
-    const recipientId =
-      user.id === company.profile_id ? worker.profile_id : company.profile_id;
+    const fromCompany = user.id === company.profile_id;
+    const recipientId = fromCompany ? worker.profile_id : company.profile_id;
 
     await supabase.from("notifications").insert({
       user_id: recipientId,
       type: "message",
-      title: "Yeni mesaj",
-      body: parsed.data.content.slice(0, 100),
-      link: `/mesajlar?c=${conversationId}`,
+      title: fromCompany
+        ? "PATRON SENİ KAPMAK İSTİYOR 🔥"
+        : "Yeni mesaj",
+      body: fromCompany
+        ? `${company.name}: ${parsed.data.content.slice(0, 80)}`
+        : parsed.data.content.slice(0, 100),
+      link: fromCompany
+        ? `/isci/mesajlar?c=${conversationId}`
+        : `/firma/mesajlar?c=${conversationId}`,
     });
   }
 

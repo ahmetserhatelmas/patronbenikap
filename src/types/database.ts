@@ -75,6 +75,7 @@ export interface Worker {
   driver_license: string[];
   military_status: MilitaryStatus | null;
   currently_working: boolean;
+  shift_work?: boolean;
   expected_salary: number | null;
   availability: AvailabilityStatus | null;
   about_me: string | null;
@@ -198,6 +199,7 @@ export interface WorkerSearchParams {
   availability?: AvailabilityStatus;
   languages?: string[];
   education?: EducationLevel;
+  shift_work?: boolean;
   q?: string;
   sort?: "newest" | "experience" | "salary_asc" | "salary_desc";
   page?: number;

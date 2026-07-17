@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
-import { Loader2, Info } from "lucide-react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { Camera, Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -24,10 +25,11 @@ import {
   DRIVER_LICENSES,
   LANGUAGES,
 } from "@/lib/constants";
-import { formatSalary } from "@/lib/utils";
+import { cn, formatSalary, getInitials } from "@/lib/utils";
 import {
   upsertWorkerProfile,
   getSalaryForProfession,
+  uploadAvatar,
 } from "@/lib/actions/profiles";
 import type { ActionResult } from "@/lib/actions/auth";
 import type { Profession, Skill, Worker, SalaryRange } from "@/types/database";
@@ -38,23 +40,43 @@ interface WorkerProfileFormProps {
   worker?: Worker | null;
   professions: Profession[];
   skills: Skill[];
+  avatarUrl?: string | null;
 }
 
 export function WorkerProfileForm({
   worker,
   professions,
   skills,
+  avatarUrl,
 }: WorkerProfileFormProps) {
   const [state, action, pending] = useActionState(upsertWorkerProfile, initial);
-  const [professionId, setProfessionId] = useState(
-    worker?.profession_id ?? ""
-  );
+  const [avatar, setAvatar] = useState(avatarUrl ?? null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // Controlled values so errors don't wipe the form
+  const [firstName, setFirstName] = useState(worker?.first_name ?? "");
+  const [lastName, setLastName] = useState(worker?.last_name ?? "");
+  const [age, setAge] = useState(worker?.age?.toString() ?? "");
+  const [district, setDistrict] = useState(worker?.district ?? "");
+  const [professionId, setProfessionId] = useState(worker?.profession_id ?? "");
   const [city, setCity] = useState(worker?.city ?? "");
   const [education, setEducation] = useState(worker?.education ?? "");
-  const [availability, setAvailability] = useState(
-    worker?.availability ?? ""
-  );
+  const [availability, setAvailability] = useState(worker?.availability ?? "");
   const [military, setMilitary] = useState(worker?.military_status ?? "");
+  const [experience, setExperience] = useState(
+    String(worker?.experience_years ?? 0)
+  );
+  const [salary, setSalary] = useState(
+    worker?.expected_salary?.toString() ?? ""
+  );
+  const [aboutMe, setAboutMe] = useState(worker?.about_me ?? "");
+  const [specializations, setSpecializations] = useState(
+    worker?.specializations?.join(", ") ?? ""
+  );
+  const [phone, setPhone] = useState(worker?.phone ?? "");
+  const [whatsapp, setWhatsapp] = useState(worker?.whatsapp ?? "");
+  const [email, setEmail] = useState(worker?.email ?? "");
   const [salaryInfo, setSalaryInfo] = useState<SalaryRange | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<string[]>(
     worker?.skills?.map((s) => s.skill_id) ?? []
@@ -69,7 +91,12 @@ export function WorkerProfileForm({
   const [currentlyWorking, setCurrentlyWorking] = useState(
     worker?.currently_working ?? false
   );
+  const [shiftWork, setShiftWork] = useState(
+    Boolean((worker as Worker & { shift_work?: boolean })?.shift_work)
+  );
   const [, startTransition] = useTransition();
+
+  const errors = state.fieldErrors ?? {};
 
   useEffect(() => {
     if (state.success) toast.success(state.success);
@@ -97,6 +124,22 @@ export function WorkerProfileForm({
     );
   }
 
+  async function onAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const fd = new FormData();
+    fd.set("avatar", file);
+    const res = await uploadAvatar(fd);
+    setUploading(false);
+    if (res.error) {
+      toast.error(res.error);
+      return;
+    }
+    toast.success(res.success);
+    setAvatar(URL.createObjectURL(file));
+  }
+
   return (
     <form action={action} className="space-y-8">
       <input type="hidden" name="is_visible" value={String(isVisible)} />
@@ -105,6 +148,7 @@ export function WorkerProfileForm({
         name="currently_working"
         value={String(currentlyWorking)}
       />
+      <input type="hidden" name="shift_work" value={String(shiftWork)} />
       <input type="hidden" name="profession_id" value={professionId} />
       <input type="hidden" name="city" value={city} />
       <input type="hidden" name="education" value={education} />
@@ -120,15 +164,74 @@ export function WorkerProfileForm({
         <input key={l} type="hidden" name="driver_license" value={l} />
       ))}
 
+      <Section title="Profil fotoğrafı">
+        <div className="flex items-center gap-5">
+          <Avatar className="h-20 w-20 ring-2 ring-primary/20">
+            <AvatarImage src={avatar ?? undefined} />
+            <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
+              {getInitials(firstName || "P", lastName || "B")}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onAvatarChange}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+            >
+              {uploading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Camera className="mr-2 h-4 w-4" />
+              )}
+              Fotoğraf yükle
+            </Button>
+            <p className="mt-2 text-xs text-muted-foreground">
+              JPG veya PNG, en fazla 5MB
+            </p>
+          </div>
+        </div>
+      </Section>
+
       <Section title="Temel bilgiler">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Ad" name="first_name" defaultValue={worker?.first_name} required />
-          <Field label="Soyad" name="last_name" defaultValue={worker?.last_name} required />
-          <Field label="Yaş" name="age" type="number" defaultValue={worker?.age ?? ""} />
+          <Field
+            label="Ad"
+            name="first_name"
+            value={firstName}
+            onChange={setFirstName}
+            error={errors.first_name}
+            required
+          />
+          <Field
+            label="Soyad"
+            name="last_name"
+            value={lastName}
+            onChange={setLastName}
+            error={errors.last_name}
+            required
+          />
+          <Field
+            label="Yaş"
+            name="age"
+            type="number"
+            value={age}
+            onChange={setAge}
+            error={errors.age}
+          />
           <div className="space-y-2">
-            <Label>Şehir</Label>
+            <Label className={errors.city ? "text-destructive" : undefined}>
+              Şehir *
+            </Label>
             <Select value={city} onValueChange={setCity}>
-              <SelectTrigger>
+              <SelectTrigger className={errors.city ? "border-destructive" : ""}>
                 <SelectValue placeholder="Şehir seç" />
               </SelectTrigger>
               <SelectContent>
@@ -139,30 +242,46 @@ export function WorkerProfileForm({
                 ))}
               </SelectContent>
             </Select>
+            {errors.city && (
+              <p className="text-xs text-destructive">{errors.city}</p>
+            )}
           </div>
-          <Field label="İlçe" name="district" defaultValue={worker?.district ?? ""} />
+          <Field
+            label="İlçe"
+            name="district"
+            value={district}
+            onChange={setDistrict}
+            error={errors.district}
+          />
         </div>
       </Section>
 
       <Section title="Meslek & deneyim">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
-            <Label>Meslek</Label>
-            <Select
-              value={professionId}
-              onValueChange={setProfessionId}
+            <Label
+              className={errors.profession_id ? "text-destructive" : undefined}
             >
-              <SelectTrigger>
+              Meslek *
+            </Label>
+            <Select value={professionId} onValueChange={setProfessionId}>
+              <SelectTrigger
+                className={errors.profession_id ? "border-destructive" : ""}
+              >
                 <SelectValue placeholder="Meslek seç" />
               </SelectTrigger>
               <SelectContent>
                 {professions.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name}
+                    {p.category ? ` · ${p.category}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {errors.profession_id && (
+              <p className="text-xs text-destructive">{errors.profession_id}</p>
+            )}
             {salaryInfo && (
               <div className="mt-2 flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -184,13 +303,17 @@ export function WorkerProfileForm({
             label="Deneyim (yıl)"
             name="experience_years"
             type="number"
-            defaultValue={worker?.experience_years ?? 0}
+            value={experience}
+            onChange={setExperience}
+            error={errors.experience_years}
           />
           <Field
             label="Beklenen maaş (TL)"
             name="expected_salary"
             type="number"
-            defaultValue={worker?.expected_salary ?? ""}
+            value={salary}
+            onChange={setSalary}
+            error={errors.expected_salary}
           />
           <div className="space-y-2">
             <Label>Eğitim</Label>
@@ -245,13 +368,27 @@ export function WorkerProfileForm({
               onCheckedChange={setCurrentlyWorking}
             />
           </div>
+          <div className="flex items-center justify-between rounded-lg border border-brand-orange/30 bg-brand-orange/5 p-3 sm:col-span-2">
+            <div>
+              <Label htmlFor="shift">Vardiyalı çalışmaya uygun musun?</Label>
+              <p className="text-xs text-muted-foreground">
+                Gece / dönüşümlü vardiya kabul ediyorsan aç
+              </p>
+            </div>
+            <Switch
+              id="shift"
+              checked={shiftWork}
+              onCheckedChange={setShiftWork}
+            />
+          </div>
         </div>
         <div className="mt-4 space-y-2">
           <Label>Uzmanlıklar (virgülle ayır)</Label>
           <Input
             name="specializations"
             placeholder="CNC, Montaj, Kalite kontrol"
-            defaultValue={worker?.specializations?.join(", ") ?? ""}
+            value={specializations}
+            onChange={(e) => setSpecializations(e.target.value)}
           />
         </div>
       </Section>
@@ -264,7 +401,9 @@ export function WorkerProfileForm({
               <button
                 key={skill.id}
                 type="button"
-                onClick={() => toggleArr(selectedSkills, setSelectedSkills, skill.id)}
+                onClick={() =>
+                  toggleArr(selectedSkills, setSelectedSkills, skill.id)
+                }
                 className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
                   active
                     ? "border-primary bg-primary text-primary-foreground"
@@ -319,21 +458,43 @@ export function WorkerProfileForm({
         <Textarea
           name="about_me"
           rows={5}
-          placeholder="Kendini kısaca tanıt..."
-          defaultValue={worker?.about_me ?? ""}
-          className="resize-none"
+          placeholder="Kendini kısaca tanıt... (en az 20 karakter)"
+          value={aboutMe}
+          onChange={(e) => setAboutMe(e.target.value)}
+          className={cn(
+            "resize-none",
+            errors.about_me && "border-destructive"
+          )}
         />
+        {errors.about_me && (
+          <p className="mt-1 text-xs text-destructive">{errors.about_me}</p>
+        )}
       </Section>
 
       <Section title="İletişim">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Telefon" name="phone" defaultValue={worker?.phone ?? ""} />
-          <Field label="WhatsApp" name="whatsapp" defaultValue={worker?.whatsapp ?? ""} />
+          <Field
+            label="Telefon"
+            name="phone"
+            value={phone}
+            onChange={setPhone}
+            error={errors.phone}
+            required
+          />
+          <Field
+            label="WhatsApp"
+            name="whatsapp"
+            value={whatsapp}
+            onChange={setWhatsapp}
+            error={errors.whatsapp}
+          />
           <Field
             label="E-posta"
             name="email"
             type="email"
-            defaultValue={worker?.email ?? ""}
+            value={email}
+            onChange={setEmail}
+            error={errors.email}
             className="sm:col-span-2"
           />
         </div>
@@ -348,7 +509,18 @@ export function WorkerProfileForm({
         </div>
       </Section>
 
-      <Button type="submit" size="lg" className="h-12 w-full sm:w-auto" disabled={pending}>
+      {state.error && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {state.error}
+        </div>
+      )}
+
+      <Button
+        type="submit"
+        size="lg"
+        className="h-12 w-full sm:w-auto"
+        disabled={pending}
+      >
         {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Profili Kaydet
       </Button>
@@ -377,27 +549,41 @@ function Field({
   label,
   name,
   type = "text",
-  defaultValue,
+  value,
+  onChange,
+  error,
   required,
   className,
 }: {
   label: string;
   name: string;
   type?: string;
-  defaultValue?: string | number;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
   required?: boolean;
   className?: string;
 }) {
   return (
     <div className={`space-y-2 ${className ?? ""}`}>
-      <Label htmlFor={name}>{label}</Label>
+      <Label
+        htmlFor={name}
+        className={error ? "text-destructive" : undefined}
+      >
+        {label}
+        {required ? " *" : ""}
+      </Label>
       <Input
         id={name}
         name={name}
         type={type}
-        defaultValue={defaultValue}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         required={required}
+        className={error ? "border-destructive" : undefined}
+        aria-invalid={!!error}
       />
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }

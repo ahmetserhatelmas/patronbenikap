@@ -39,6 +39,7 @@ export async function upsertWorkerProfile(
     driver_license: driverLicense,
     military_status: formData.get("military_status") || null,
     currently_working: formData.get("currently_working") === "true",
+    shift_work: formData.get("shift_work") === "true",
     expected_salary: formData.get("expected_salary") || null,
     availability: formData.get("availability") || null,
     about_me: formData.get("about_me") || null,
@@ -51,7 +52,17 @@ export async function upsertWorkerProfile(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Geçersiz form" };
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0];
+      if (typeof key === "string" && !fieldErrors[key]) {
+        fieldErrors[key] = issue.message;
+      }
+    }
+    return {
+      error: "Lütfen işaretli alanları doldur",
+      fieldErrors,
+    };
   }
 
   const supabase = await createClient();
@@ -224,6 +235,7 @@ export async function searchWorkers(params: WorkerSearchParams) {
     query = query.lte("expected_salary", params.salary_max);
   if (params.availability) query = query.eq("availability", params.availability);
   if (params.education) query = query.eq("education", params.education);
+  if (params.shift_work === true) query = query.eq("shift_work", true);
   if (params.languages?.length)
     query = query.overlaps("languages", params.languages);
   if (params.q) {
@@ -295,12 +307,21 @@ export async function toggleFavorite(workerId: string): Promise<ActionResult> {
     .single();
 
   if (worker) {
+    const { data: companyInfo } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", company.id)
+      .single();
+
     await supabase.from("notifications").insert({
       user_id: worker.profile_id,
       type: "favorite",
-      title: "Profiliniz kaydedildi",
-      body: "Bir firma profilinizi favorilere ekledi.",
+      title: "PATRON SENİ KAPMAK İSTİYOR 🔥",
+      body: companyInfo?.name
+        ? `${companyInfo.name} seni favorilerine ekledi. Hadi, fırsatı kaçırma!`
+        : "Bir firma seni favorilerine ekledi. Hadi, fırsatı kaçırma!",
       link: "/isci/bildirimler",
+      metadata: { company_id: company.id },
     });
   }
 
@@ -317,4 +338,55 @@ export async function getSalaryForProfession(professionId: string) {
     .is("city", null)
     .maybeSingle();
   return data;
+}
+
+export async function uploadAvatar(formData: FormData): Promise<ActionResult> {
+  const file = formData.get("avatar") as File | null;
+  if (!file || file.size === 0) {
+    return { error: "Fotoğraf seçilmedi" };
+  }
+  if (!file.type.startsWith("image/")) {
+    return { error: "Sadece görsel yükleyebilirsin" };
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    return { error: "Fotoğraf en fazla 5MB olmalı" };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Oturum gerekli" };
+
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${user.id}/avatar.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(path, file, { upsert: true, contentType: file.type });
+
+  if (uploadError) {
+    return {
+      error:
+        uploadError.message.includes("Bucket") ||
+        uploadError.message.includes("not found")
+          ? "Storage bucket eksik: Supabase Storage'da 'avatars' bucket'ını public oluştur."
+          : uploadError.message,
+    };
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("avatars").getPublicUrl(path);
+
+  const avatarUrl = `${publicUrl}?t=${Date.now()}`;
+
+  await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", user.id);
+
+  revalidatePath("/isci/profil");
+  revalidatePath("/isci/panel");
+  return { success: "Fotoğraf güncellendi" };
 }

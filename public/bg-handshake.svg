@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" fill="none">
+  <!-- Charcoal sketch: two people shaking hands -->
+  <g opacity="0.55" stroke="#1a1a1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Left person torso -->
+    <path d="M210 420 C210 360 230 320 280 300 C300 290 320 285 340 290" />
+    <path d="M250 300 C240 250 250 210 280 190 C300 175 325 180 340 200" />
+    <ellipse cx="305" cy="165" rx="38" ry="44" />
+    <!-- Left arm -->
+    <path d="M330 295 C360 310 390 320 420 325" />
+    <path d="M335 310 C365 325 395 335 420 338" />
+    <!-- Right person torso -->
+    <path d="M590 420 C590 360 570 320 520 300 C500 290 480 285 460 290" />
+    <path d="M550 300 C560 250 550 210 520 190 C500 175 475 180 460 200" />
+    <ellipse cx="495" cy="165" rx="38" ry="44" />
+    <!-- Right arm -->
+    <path d="M470 295 C440 310 410 320 380 325" />
+    <path d="M465 310 C435 325 405 335 380 338" />
+    <!-- Handshake -->
+    <path d="M380 325 C390 318 410 318 420 325 C430 332 425 345 415 350 C405 355 390 352 385 342 C380 332 375 330 380 325 Z" />
+    <path d="M395 340 C400 348 410 350 418 345" />
+    <path d="M388 335 C395 342 405 344 412 340" />
+    <!-- Sketch texture lines -->
+    <path d="M270 250 C275 260 278 270 280 280" opacity="0.5" />
+    <path d="M520 250 C515 260 512 270 510 280" opacity="0.5" />
+    <path d="M300 400 C320 405 340 402 360 398" opacity="0.4" />
+    <path d="M500 400 C480 405 460 402 440 398" opacity="0.4" />
+  </g>
+</svg>

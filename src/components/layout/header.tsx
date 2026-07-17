@@ -6,9 +6,11 @@ import { Menu, Moon, Sun, X, Bell, MessageSquare } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/shared/brand-logo";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/types/database";
 import { signOut } from "@/lib/actions/auth";
+import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 
 interface HeaderProps {
   profile?: Profile | null;
@@ -24,6 +26,13 @@ export function Header({
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const liveNotifs = useUnreadNotifications(
+    profile?.role === "worker" ? profile.id : null
+  );
+  const notifCount =
+    profile?.role === "worker"
+      ? Math.max(unreadNotifications, liveNotifs)
+      : unreadNotifications;
 
   const panelHref =
     profile?.role === "company"
@@ -46,24 +55,23 @@ export function Header({
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 glass">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link
-          href={profile ? panelHref : "/"}
-          className="flex items-center gap-2 group"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md shadow-primary/25 transition-transform group-hover:scale-105">
-            PB
-          </span>
-          <span className="font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight">
-            Patron <span className="text-primary">Beni</span>{" "}
-            <span className="text-brand-orange">Kap</span>
-          </span>
+        <Link href={profile ? panelHref : "/"} className="group">
+          <BrandLogo
+            size={36}
+            className="transition-transform group-hover:scale-[1.02]"
+          />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
           {!profile && (
-            <NavLink href="/#nasil-calisir" active={false}>
-              Nasıl Çalışır
-            </NavLink>
+            <>
+              <NavLink href="/#nasil-calisir" active={false}>
+                Nasıl Çalışır
+              </NavLink>
+              <NavLink href="/blog" active={pathname.startsWith("/blog")}>
+                Blog
+              </NavLink>
+            </>
           )}
           {showWorkerSearch && (
             <NavLink
@@ -80,7 +88,7 @@ export function Header({
               </NavLink>
               <Link
                 href={messagesHref}
-                className="relative rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <MessageSquare className="h-5 w-5" />
                 {unreadMessages > 0 && (
@@ -92,12 +100,12 @@ export function Header({
               {profile.role === "worker" && (
                 <Link
                   href="/isci/bildirimler"
-                  className="relative rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <Bell className="h-5 w-5" />
-                  {unreadNotifications > 0 && (
+                  {notifCount > 0 && (
                     <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">
-                      {unreadNotifications}
+                      {notifCount}
                     </span>
                   )}
                 </Link>
@@ -152,16 +160,25 @@ export function Header({
       </div>
 
       {open && (
-        <div className="border-t border-border/60 bg-background/95 px-4 py-4 md:hidden animate-fade-in">
+        <div className="animate-fade-in border-t border-border/60 bg-background/95 px-4 py-4 md:hidden">
           <div className="flex flex-col gap-2">
             {!profile && (
-              <Link
-                href="/#nasil-calisir"
-                className="rounded-lg px-3 py-2 text-sm hover:bg-muted"
-                onClick={() => setOpen(false)}
-              >
-                Nasıl Çalışır
-              </Link>
+              <>
+                <Link
+                  href="/#nasil-calisir"
+                  className="rounded-lg px-3 py-2 text-sm hover:bg-muted"
+                  onClick={() => setOpen(false)}
+                >
+                  Nasıl Çalışır
+                </Link>
+                <Link
+                  href="/blog"
+                  className="rounded-lg px-3 py-2 text-sm hover:bg-muted"
+                  onClick={() => setOpen(false)}
+                >
+                  Blog
+                </Link>
+              </>
             )}
             {showWorkerSearch && (
               <Link

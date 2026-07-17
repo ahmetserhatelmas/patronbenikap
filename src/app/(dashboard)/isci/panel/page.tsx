@@ -41,6 +41,11 @@ export default async function WorkerDashboard() {
     .eq("user_id", profile.id)
     .eq("is_read", false);
 
+  const { count: uniqueCompanyViews } = await supabase
+    .from("recently_viewed")
+    .select("*", { count: "exact", head: true })
+    .eq("worker_id", worker.id);
+
   const cards = [
     {
       label: "Profil tamamlanma",
@@ -50,14 +55,15 @@ export default async function WorkerDashboard() {
       bg: "bg-primary/10",
     },
     {
-      label: "Görüntülenme",
-      value: worker.view_count,
+      label: "Firma görüntüleme",
+      value: uniqueCompanyViews ?? 0,
+      hint: `${worker.view_count} toplam bakış`,
       icon: Eye,
       color: "text-brand-orange",
       bg: "bg-brand-orange/10",
     },
     {
-      label: "Favori",
+      label: "Favoriye alan firma",
       value: worker.favorite_count,
       icon: Heart,
       color: "text-primary",
@@ -111,6 +117,9 @@ export default async function WorkerDashboard() {
               </div>
               <p className="text-2xl font-bold">{c.value}</p>
               <p className="text-sm text-muted-foreground">{c.label}</p>
+              {"hint" in c && c.hint ? (
+                <p className="mt-0.5 text-xs text-muted-foreground/80">{c.hint}</p>
+              ) : null}
             </div>
           ))}
         </div>

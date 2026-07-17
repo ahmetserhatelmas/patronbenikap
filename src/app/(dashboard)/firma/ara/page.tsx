@@ -56,6 +56,7 @@ export default async function SearchPage({
     salary_max: params.salary_max ? Number(params.salary_max) : undefined,
     availability: params.availability as AvailabilityStatus | undefined,
     education: params.education as EducationLevel | undefined,
+    shift_work: params.shift_work === "1" ? true : undefined,
     sort: (params.sort as "newest" | "experience" | "salary_asc" | "salary_desc") || "newest",
     page,
     limit: 12,

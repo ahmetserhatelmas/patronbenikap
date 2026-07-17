@@ -191,6 +191,33 @@ export function SearchFilters({ professions }: SearchFiltersProps) {
         </Select>
       </div>
 
+      <div className="flex items-center justify-between rounded-lg border p-3">
+        <Label htmlFor="shift_filter" className="text-sm">
+          Vardiyalı çalışır
+        </Label>
+        <button
+          type="button"
+          id="shift_filter"
+          onClick={() =>
+            update(
+              "shift_work",
+              searchParams.get("shift_work") === "1" ? "" : "1"
+            )
+          }
+          className={`relative h-6 w-11 rounded-full transition-colors ${
+            searchParams.get("shift_work") === "1"
+              ? "bg-brand-orange"
+              : "bg-muted"
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              searchParams.get("shift_work") === "1" ? "translate-x-5" : ""
+            }`}
+          />
+        </button>
+      </div>
+
       <div className="space-y-2">
         <Label>Sırala</Label>
         <Select

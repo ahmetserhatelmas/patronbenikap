@@ -30,7 +30,7 @@ export function HowItWorks() {
             Nasıl çalışır?
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Üç adım. Hepsi bu kadar.
+            İşçi olarak profil yayınla — firmalar seni bulsun. Üç adım.
           </p>
         </div>
 

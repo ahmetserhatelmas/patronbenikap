@@ -38,6 +38,7 @@ export default async function WorkerProfilePage() {
             worker={worker}
             professions={professions ?? []}
             skills={skills ?? []}
+            avatarUrl={profile.avatar_url}
           />
         </div>
       </main>

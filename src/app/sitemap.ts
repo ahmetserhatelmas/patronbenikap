@@ -9,15 +9,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/kayit`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/giris`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/firma/ara`, changeFrequency: "hourly", priority: 0.9 },
+    { url: `${base}/blog`, changeFrequency: "weekly", priority: 0.8 },
   ];
 
   try {
     const supabase = await createClient();
-    const { data: workers } = await supabase
-      .from("workers")
-      .select("slug, updated_at")
-      .eq("is_visible", true)
-      .limit(1000);
+    const [{ data: workers }, { data: posts }] = await Promise.all([
+      supabase
+        .from("workers")
+        .select("slug, updated_at")
+        .eq("is_visible", true)
+        .limit(1000),
+      supabase
+        .from("blog_posts")
+        .select("slug, updated_at")
+        .eq("is_published", true)
+        .limit(200),
+    ]);
 
     const workerPages: MetadataRoute.Sitemap =
       workers?.map((w) => ({
@@ -27,7 +35,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       })) ?? [];
 
-    return [...staticPages, ...workerPages];
+    const blogPages: MetadataRoute.Sitemap =
+      posts?.map((p) => ({
+        url: `${base}/blog/${p.slug}`,
+        lastModified: new Date(p.updated_at),
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
+      })) ?? [];
+
+    return [...staticPages, ...workerPages, ...blogPages];
   } catch {
     return staticPages;
   }
