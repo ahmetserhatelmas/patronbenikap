@@ -5,22 +5,20 @@ import { Button } from "@/components/ui/button";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden gradient-mesh">
-      <div className="pointer-events-none absolute -left-20 top-20 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
-      <div className="pointer-events-none absolute -right-16 bottom-10 h-80 w-80 rounded-full bg-brand-orange/20 blur-3xl" />
-
-      {/* Charcoal handshake sketch background */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07] dark:opacity-[0.12]"
-        style={{
-          backgroundImage: "url(/bg-handshake.svg)",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center 55%",
-          backgroundSize: "min(900px, 95vw)",
-        }}
+    <section className="relative overflow-hidden">
+      {/* Full-bleed işe alım / el sıkışma fotoğrafı */}
+      <Image
+        src="/hero-suit-handshake.jpg"
+        alt=""
+        fill
+        priority
+        className="object-cover object-center"
+        sizes="100vw"
       />
 
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMzQ0IzNzEiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PHBhdGggZD0iTTM2IDM0djItaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-40" />
+      {/* Okunabilirlik: fotoğrafı soft yıkayıp marka renklerini taşı */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/88 via-white/82 to-white/90 dark:from-background/90 dark:via-background/85 dark:to-background/92" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-brand-orange/15" />
 
       <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl flex-col items-center justify-center px-4 py-20 text-center sm:px-6">
         <div className="mb-8 animate-fade-up">
@@ -34,7 +32,7 @@ export function HeroSection() {
           />
         </div>
 
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-orange/30 bg-brand-orange/10 px-4 py-1.5 text-sm font-medium text-brand-orange animate-fade-up [animation-delay:80ms]">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-orange/30 bg-brand-orange/10 px-4 py-1.5 text-sm font-medium text-brand-orange backdrop-blur-sm animate-fade-up [animation-delay:80ms]">
           <UserRound className="h-3.5 w-3.5" />
           İşçiler profil yayınlar · Firmalar bulur
         </div>
@@ -68,7 +66,7 @@ export function HeroSection() {
           <Button
             size="lg"
             variant="outline"
-            className="h-12 px-8 text-base border-brand-orange/40 text-brand-orange hover:bg-brand-orange/10 hover:text-brand-orange"
+            className="h-12 px-8 text-base border-brand-orange/40 bg-white/60 text-brand-orange backdrop-blur-sm hover:bg-brand-orange/10 hover:text-brand-orange dark:bg-background/50"
             asChild
           >
             <Link href="/kayit?role=company">
@@ -82,32 +80,6 @@ export function HeroSection() {
           <Sparkles className="mr-1 inline h-3.5 w-3.5 text-primary" />
           5 dakikada profil · Ücretsiz · Firma teklifleri sana gelsin
         </p>
-
-        <div className="mt-16 w-full max-w-3xl animate-fade-up [animation-delay:450ms]">
-          <div className="relative mx-auto aspect-[16/7] overflow-hidden rounded-2xl border border-border/60 bg-card/80 shadow-2xl shadow-primary/10 backdrop-blur-sm animate-float">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-brand-orange/15" />
-            <div className="absolute inset-0 flex items-center justify-center p-8">
-              <div className="grid w-full max-w-lg gap-3 sm:grid-cols-3">
-                {[
-                  { t: "1. Profil", d: "Kendini tanıt, yayınla" },
-                  { t: "2. Keşfedil", d: "Firmalar seni bulsun" },
-                  { t: "3. Teklif al", d: "Patron seni kapsın" },
-                ].map((item, i) => (
-                  <div
-                    key={item.t}
-                    className="glass rounded-xl p-4 text-left shadow-sm"
-                  >
-                    <div
-                      className={`mb-2 h-2 w-8 rounded-full ${i === 1 ? "bg-brand-orange" : "bg-primary"}`}
-                    />
-                    <p className="text-sm font-semibold">{item.t}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{item.d}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
