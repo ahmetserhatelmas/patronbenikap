@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Patron Beni Kap
 
-## Getting Started
+> **İşi değil, iş seni bulsun.**
 
-First, run the development server:
+Modern, sade bir işçi–firma buluşma platformu. Next.js 15, TypeScript, TailwindCSS, shadcn/ui ve Supabase ile geliştirilmiştir.
+
+## Özellikler
+
+- **İşçi profilleri** — Dakikalar içinde tamamlanan sade profil
+- **Firma paneli** — Arama, filtreleme, favoriler
+- **Akıllı maaş bilgisi** — Mesleğe göre ortalama maaş
+- **Gerçek zamanlı mesajlaşma** — Supabase Realtime
+- **Bildirimler** — Profil görüntüleme, mesaj, favori
+- **Admin paneli** — Kullanıcı, firma, meslek, maaş yönetimi
+- **SEO** — Metadata, Open Graph, sitemap, robots.txt
+- **Dark mode** — Tema desteği
+- **QR kod & paylaşım** — Profil paylaşımı
+
+## Kurulum
+
+### 1. Bağımlılıklar
+
+```bash
+npm install
+```
+
+### 2. Supabase
+
+1. [supabase.com](https://supabase.com) üzerinde proje oluştur
+2. SQL Editor'de sırasıyla çalıştır:
+   - `supabase/migrations/001_initial_schema.sql`
+   - `supabase/seed.sql`
+3. Authentication → Providers: Email + Google'ı aç
+4. Storage bucket'ları oluştur: `avatars`, `portfolio`, `cvs`, `company-logos` (public)
+
+### 3. Ortam değişkenleri
+
+```bash
+cp .env.local.example .env.local
+```
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### 4. Çalıştır
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Klasör yapısı
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+src/
+├── app/                  # App Router sayfaları
+│   ├── (auth)/           # Giriş, kayıt, şifre
+│   ├── (dashboard)/      # İşçi, firma, admin panelleri
+│   └── isci/[slug]/      # Genel profil sayfası
+├── components/
+│   ├── landing/          # Ana sayfa bölümleri
+│   ├── auth/             # Auth formları
+│   ├── worker/           # İşçi UI
+│   ├── company/          # Firma UI
+│   ├── messaging/        # Sohbet
+│   └── ui/               # shadcn bileşenleri
+├── lib/
+│   ├── actions/          # Server Actions
+│   ├── supabase/         # Client / server / middleware
+│   └── validations/      # Zod şemaları
+└── types/                # TypeScript tipleri
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Admin yapmak
 
-## Learn More
+Supabase SQL:
 
-To learn more about Next.js, take a look at the following resources:
+```sql
+update public.profiles set role = 'admin' where email = 'sen@email.com';
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Renkler
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Rol | Hex |
+|-----|-----|
+| Primary (yeşil) | `#3CB371` |
+| Secondary (turuncu) | `#F97316` |
+| Background | Beyaz |
 
-## Deploy on Vercel
+## Lisans
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private — tüm hakları saklıdır.
