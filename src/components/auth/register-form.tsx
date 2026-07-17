@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { signUp, signInWithGoogle, type ActionResult } from "@/lib/actions/auth";
+import { signUp, type ActionResult } from "@/lib/actions/auth";
 import { useState } from "react";
 
 const initial: ActionResult = {};
@@ -111,21 +111,6 @@ export function RegisterForm() {
         <Button type="submit" className="w-full h-11" disabled={pending}>
           {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Kayıt Ol
-        </Button>
-      </form>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">veya</span>
-        </div>
-      </div>
-
-      <form action={signInWithGoogle.bind(null, "/")}>
-        <Button type="submit" variant="outline" className="w-full h-11">
-          Google ile devam et
         </Button>
       </form>
 
