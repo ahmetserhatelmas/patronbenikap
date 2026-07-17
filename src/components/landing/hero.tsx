@@ -38,7 +38,7 @@ export function HeroSection() {
         </div>
 
         <h1 className="max-w-4xl font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight text-balance sm:text-5xl md:text-6xl lg:text-7xl animate-fade-up [animation-delay:120ms]">
-          İşi değil,{" "}
+          Sen işi değil,{" "}
           <span className="bg-gradient-to-r from-primary to-brand-orange bg-clip-text text-transparent">
             iş seni bulsun.
           </span>
