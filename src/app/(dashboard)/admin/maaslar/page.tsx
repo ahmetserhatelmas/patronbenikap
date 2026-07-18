@@ -6,10 +6,10 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ProfessionSelectOptions } from "@/components/shared/profession-select-options";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/actions/auth";
 import { upsertSalaryRange } from "@/lib/actions/admin";
@@ -27,7 +27,7 @@ export default async function AdminSalariesPage() {
       .from("salary_ranges")
       .select("*, profession:professions(name)")
       .order("updated_at", { ascending: false }),
-    supabase.from("professions").select("id, name").order("name"),
+    supabase.from("professions").select("id, name, category").order("name"),
   ]);
 
   return (
@@ -54,12 +54,8 @@ export default async function AdminSalariesPage() {
               <SelectTrigger>
                 <SelectValue placeholder="Seç" />
               </SelectTrigger>
-              <SelectContent>
-                {professions?.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
+              <SelectContent className="max-h-80">
+                <ProfessionSelectOptions professions={professions ?? []} />
               </SelectContent>
             </Select>
           </div>

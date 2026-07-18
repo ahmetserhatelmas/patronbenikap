@@ -33,6 +33,18 @@ export function formatNumber(n: number): string {
   return new Intl.NumberFormat("tr-TR").format(n);
 }
 
+/** Keep only digits (blocks minus / decimals). */
+export function digitsOnly(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
+/** Format integer digits with Turkish thousand separators: 34997 → 34.997 */
+export function formatTrGrouped(digits: string): string {
+  const clean = digitsOnly(digits);
+  if (!clean) return "";
+  return new Intl.NumberFormat("tr-TR").format(Number(clean));
+}
+
 export function getInitials(first: string, last?: string): string {
   return `${first.charAt(0)}${last?.charAt(0) ?? ""}`.toUpperCase();
 }

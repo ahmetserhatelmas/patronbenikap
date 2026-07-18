@@ -13,26 +13,42 @@ export type ActionResult = {
   error?: string;
   success?: string;
   fieldErrors?: Record<string, string>;
+  /** Keep form fields after validation / auth errors (React resets uncontrolled forms). */
+  values?: Record<string, string>;
 };
+
+function formValues(formData: FormData, keys: string[]) {
+  const values: Record<string, string> = {};
+  for (const key of keys) {
+    const v = formData.get(key);
+    if (typeof v === "string") values[key] = v;
+  }
+  return values;
+}
 
 export async function signIn(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const values = formValues(formData, ["email", "password", "next"]);
+
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Geçersiz form" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "Geçersiz form",
+      values,
+    };
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
-    return { error: "E-posta veya şifre hatalı" };
+    return { error: "E-posta veya şifre hatalı", values };
   }
 
   const next = (formData.get("next") as string) || "/";
@@ -43,6 +59,14 @@ export async function signUp(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const values = formValues(formData, [
+    "email",
+    "password",
+    "confirmPassword",
+    "fullName",
+    "role",
+  ]);
+
   const parsed = registerSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -52,7 +76,10 @@ export async function signUp(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Geçersiz form" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "Geçersiz form",
+      values,
+    };
   }
 
   const supabase = await createClient();
@@ -81,14 +108,18 @@ export async function signUp(
       return {
         error:
           "Veritabanı hatası: Supabase'te signup trigger'ı düzeltilmeli. SQL Editor'de supabase/migrations/002_fix_signup_trigger.sql dosyasını çalıştır.",
+        values,
       };
     }
 
     if (message.toLowerCase().includes("already registered")) {
-      return { error: "Bu e-posta zaten kayıtlı. Giriş yapmayı dene." };
+      return {
+        error: "Bu e-posta zaten kayıtlı. Giriş yapmayı dene.",
+        values,
+      };
     }
 
-    return { error: message };
+    return { error: message, values };
   }
 
   // Supabase sometimes returns a user with empty identities when email exists
@@ -97,7 +128,10 @@ export async function signUp(
     Array.isArray(data.user.identities) &&
     data.user.identities.length === 0
   ) {
-    return { error: "Bu e-posta zaten kayıtlı. Giriş yapmayı dene." };
+    return {
+      error: "Bu e-posta zaten kayıtlı. Giriş yapmayı dene.",
+      values,
+    };
   }
 
   const onboardingPath =
@@ -121,6 +155,7 @@ export async function signUp(
   return {
     error:
       "Otomatik giriş yapılamadı. Supabase Dashboard → Authentication → Sign In / Providers → Email altında 'Confirm email' ayarını kapat, sonra tekrar kayıt ol.",
+    values,
   };
 }
 
@@ -150,12 +185,17 @@ export async function forgotPassword(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const values = formValues(formData, ["email"]);
+
   const parsed = forgotPasswordSchema.safeParse({
     email: formData.get("email"),
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Geçersiz e-posta" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "Geçersiz e-posta",
+      values,
+    };
   }
 
   const supabase = await createClient();
@@ -164,7 +204,7 @@ export async function forgotPassword(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: error.message, values };
   }
 
   return { success: "Şifre sıfırlama linki e-posta adresinize gönderildi." };

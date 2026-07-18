@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ProfessionSelectOptions } from "@/components/shared/profession-select-options";
 import {
   CITIES,
   EDUCATION_LABELS,
@@ -25,7 +26,7 @@ import {
   DRIVER_LICENSES,
   LANGUAGES,
 } from "@/lib/constants";
-import { cn, formatSalary, getInitials } from "@/lib/utils";
+import { cn, formatSalary, formatTrGrouped, digitsOnly, getInitials } from "@/lib/utils";
 import {
   upsertWorkerProfile,
   getSalaryForProfession,
@@ -57,7 +58,9 @@ export function WorkerProfileForm({
   // Controlled values so errors don't wipe the form
   const [firstName, setFirstName] = useState(worker?.first_name ?? "");
   const [lastName, setLastName] = useState(worker?.last_name ?? "");
-  const [age, setAge] = useState(worker?.age?.toString() ?? "");
+  const [age, setAge] = useState(
+    worker?.age != null ? String(worker.age) : ""
+  );
   const [district, setDistrict] = useState(worker?.district ?? "");
   const [professionId, setProfessionId] = useState(worker?.profession_id ?? "");
   const [city, setCity] = useState(worker?.city ?? "");
@@ -65,10 +68,12 @@ export function WorkerProfileForm({
   const [availability, setAvailability] = useState(worker?.availability ?? "");
   const [military, setMilitary] = useState(worker?.military_status ?? "");
   const [experience, setExperience] = useState(
-    String(worker?.experience_years ?? 0)
+    String(Math.max(0, worker?.experience_years ?? 0))
   );
   const [salary, setSalary] = useState(
-    worker?.expected_salary?.toString() ?? ""
+    worker?.expected_salary != null
+      ? digitsOnly(String(worker.expected_salary))
+      : ""
   );
   const [aboutMe, setAboutMe] = useState(worker?.about_me ?? "");
   const [specializations, setSpecializations] = useState(
@@ -221,10 +226,12 @@ export function WorkerProfileForm({
           <Field
             label="Yaş"
             name="age"
-            type="number"
+            inputMode="numeric"
             value={age}
-            onChange={setAge}
+            onChange={(v) => setAge(digitsOnly(v))}
             error={errors.age}
+            min={16}
+            max={80}
           />
           <div className="space-y-2">
             <Label className={errors.city ? "text-destructive" : undefined}>
@@ -270,13 +277,8 @@ export function WorkerProfileForm({
               >
                 <SelectValue placeholder="Meslek seç" />
               </SelectTrigger>
-              <SelectContent>
-                {professions.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                    {p.category ? ` · ${p.category}` : ""}
-                  </SelectItem>
-                ))}
+              <SelectContent className="max-h-80">
+                <ProfessionSelectOptions professions={professions} />
               </SelectContent>
             </Select>
             {errors.profession_id && (
@@ -302,19 +304,34 @@ export function WorkerProfileForm({
           <Field
             label="Deneyim (yıl)"
             name="experience_years"
-            type="number"
+            inputMode="numeric"
             value={experience}
-            onChange={setExperience}
+            onChange={(v) => setExperience(digitsOnly(v))}
             error={errors.experience_years}
+            min={0}
+            max={50}
           />
-          <Field
-            label="Beklenen maaş (TL)"
-            name="expected_salary"
-            type="number"
-            value={salary}
-            onChange={setSalary}
-            error={errors.expected_salary}
-          />
+          <div className="space-y-2">
+            <Label
+              htmlFor="expected_salary_display"
+              className={errors.expected_salary ? "text-destructive" : undefined}
+            >
+              Beklenen maaş (TL)
+            </Label>
+            <input type="hidden" name="expected_salary" value={salary} />
+            <Input
+              id="expected_salary_display"
+              inputMode="numeric"
+              placeholder="örn. 35.000"
+              value={formatTrGrouped(salary)}
+              onChange={(e) => setSalary(digitsOnly(e.target.value))}
+              className={errors.expected_salary ? "border-destructive" : undefined}
+              aria-invalid={!!errors.expected_salary}
+            />
+            {errors.expected_salary && (
+              <p className="text-xs text-destructive">{errors.expected_salary}</p>
+            )}
+          </div>
           <div className="space-y-2">
             <Label>Eğitim</Label>
             <Select value={education} onValueChange={setEducation}>
@@ -549,20 +566,26 @@ function Field({
   label,
   name,
   type = "text",
+  inputMode,
   value,
   onChange,
   error,
   required,
   className,
+  min,
+  max,
 }: {
   label: string;
   name: string;
   type?: string;
+  inputMode?: "numeric" | "text" | "tel" | "email";
   value: string;
   onChange: (v: string) => void;
   error?: string;
   required?: boolean;
   className?: string;
+  min?: number;
+  max?: number;
 }) {
   return (
     <div className={`space-y-2 ${className ?? ""}`}>
@@ -577,9 +600,12 @@ function Field({
         id={name}
         name={name}
         type={type}
+        inputMode={inputMode}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
+        min={min}
+        max={max}
         className={error ? "border-destructive" : undefined}
         aria-invalid={!!error}
       />

@@ -14,6 +14,7 @@ import {
   Eye,
   Mail,
   Download,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
@@ -39,6 +40,7 @@ import type { Worker } from "@/types/database";
 interface PublicProfileProps {
   worker: Worker;
   isCompany?: boolean;
+  isOwner?: boolean;
   isFavorited?: boolean;
   profileUrl: string;
 }
@@ -46,6 +48,7 @@ interface PublicProfileProps {
 export function PublicProfileView({
   worker,
   isCompany,
+  isOwner,
   isFavorited: initialFav,
   profileUrl,
 }: PublicProfileProps) {
@@ -135,6 +138,14 @@ export function PublicProfileView({
         </div>
 
         <div className="mt-8 flex flex-wrap justify-center gap-2 sm:justify-start">
+          {isOwner && (
+            <Button asChild className="shadow-md shadow-primary/20">
+              <Link href="/isci/profil">
+                <Pencil className="mr-1.5 h-4 w-4" />
+                Profili Düzenle
+              </Link>
+            </Button>
+          )}
           {worker.phone && (
             <Button asChild className="shadow-md shadow-primary/20">
               <a href={`tel:${worker.phone}`}>

@@ -12,10 +12,15 @@ const initial: ActionResult = {};
 
 export function LoginForm({ next = "/" }: { next?: string }) {
   const [state, action, pending] = useActionState(signIn, initial);
+  const values = state.values ?? {};
 
   return (
     <div className="space-y-6">
-      <form action={action} className="space-y-4">
+      <form
+        key={state.error ? `err-${values.email}` : "idle"}
+        action={action}
+        className="space-y-4"
+      >
         <input type="hidden" name="next" value={next} />
         <div className="space-y-2">
           <Label htmlFor="email">E-posta</Label>
@@ -26,6 +31,7 @@ export function LoginForm({ next = "/" }: { next?: string }) {
             placeholder="ornek@email.com"
             required
             autoComplete="email"
+            defaultValue={values.email ?? ""}
           />
         </div>
         <div className="space-y-2">
@@ -44,6 +50,7 @@ export function LoginForm({ next = "/" }: { next?: string }) {
             type="password"
             required
             autoComplete="current-password"
+            defaultValue={values.password ?? ""}
           />
         </div>
         {state.error && (

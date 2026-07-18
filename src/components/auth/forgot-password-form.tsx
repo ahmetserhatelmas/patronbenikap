@@ -12,6 +12,7 @@ const initial: ActionResult = {};
 
 export function ForgotPasswordForm() {
   const [state, action, pending] = useActionState(forgotPassword, initial);
+  const values = state.values ?? {};
 
   if (state.success) {
     return (
@@ -25,10 +26,21 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form action={action} className="space-y-4">
+    <form
+      key={state.error ? `err-${values.email}` : "idle"}
+      action={action}
+      className="space-y-4"
+    >
       <div className="space-y-2">
         <Label htmlFor="email">E-posta</Label>
-        <Input id="email" name="email" type="email" required />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          defaultValue={values.email ?? ""}
+        />
       </div>
       {state.error && (
         <p className="text-sm text-destructive">{state.error}</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Loader2, Building2, User } from "lucide-react";
@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { signUp, type ActionResult } from "@/lib/actions/auth";
-import { useState } from "react";
 
 const initial: ActionResult = {};
 
@@ -19,6 +18,14 @@ export function RegisterForm() {
     searchParams.get("role") === "company" ? "company" : "worker";
   const [role, setRole] = useState<"worker" | "company">(defaultRole);
   const [state, action, pending] = useActionState(signUp, initial);
+
+  const values = state.values ?? {};
+
+  useEffect(() => {
+    if (values.role === "company" || values.role === "worker") {
+      setRole(values.role);
+    }
+  }, [values.role]);
 
   if (state.success) {
     return (
@@ -72,17 +79,33 @@ export function RegisterForm() {
         </button>
       </div>
 
-      <form action={action} className="space-y-4">
+      <form
+        key={state.error ? `err-${values.email}-${values.fullName}` : "idle"}
+        action={action}
+        className="space-y-4"
+      >
         <input type="hidden" name="role" value={role} />
         <div className="space-y-2">
           <Label htmlFor="fullName">
             {role === "company" ? "Yetkili adı" : "Ad Soyad"}
           </Label>
-          <Input id="fullName" name="fullName" required />
+          <Input
+            id="fullName"
+            name="fullName"
+            required
+            defaultValue={values.fullName ?? ""}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">E-posta</Label>
-          <Input id="email" name="email" type="email" required />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            required
+            defaultValue={values.email ?? ""}
+            autoComplete="email"
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Şifre</Label>
@@ -92,6 +115,8 @@ export function RegisterForm() {
             type="password"
             required
             minLength={6}
+            defaultValue={values.password ?? ""}
+            autoComplete="new-password"
           />
         </div>
         <div className="space-y-2">
@@ -101,6 +126,8 @@ export function RegisterForm() {
             name="confirmPassword"
             type="password"
             required
+            defaultValue={values.confirmPassword ?? ""}
+            autoComplete="new-password"
           />
         </div>
         {typeof state.error === "string" && state.error.length > 0 && (

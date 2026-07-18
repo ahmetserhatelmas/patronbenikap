@@ -86,6 +86,16 @@ export function Header({
               <NavLink href={panelHref} active={pathname.includes("/panel")}>
                 Panel
               </NavLink>
+              <NavLink
+                href="/profil"
+                active={
+                  pathname === "/profil" ||
+                  pathname.startsWith("/isci/profil") ||
+                  pathname.startsWith("/firma/profil")
+                }
+              >
+                Profil
+              </NavLink>
               <Link
                 href={messagesHref}
                 className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -197,6 +207,13 @@ export function Header({
                   onClick={() => setOpen(false)}
                 >
                   Panel
+                </Link>
+                <Link
+                  href="/profil"
+                  className="rounded-lg px-3 py-2 text-sm hover:bg-muted"
+                  onClick={() => setOpen(false)}
+                >
+                  Profil
                 </Link>
                 <form action={signOut}>
                   <button

@@ -157,6 +157,7 @@ export default async function WorkerPublicPage({ params }: PageProps) {
         <PublicProfileView
           worker={worker}
           isCompany={profile?.role === "company"}
+          isOwner={worker.profile_id === profile?.id}
           isFavorited={isFavorited}
           profileUrl={`/isci/${worker.slug}`}
         />

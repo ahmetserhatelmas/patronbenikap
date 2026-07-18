@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ProfessionSelectOptions } from "@/components/shared/profession-select-options";
 import {
   CITIES,
   EDUCATION_LABELS,
@@ -120,13 +121,9 @@ export function SearchFilters({ professions }: SearchFiltersProps) {
           <SelectTrigger>
             <SelectValue placeholder="Tüm meslekler" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-80">
             <SelectItem value="all">Tümü</SelectItem>
-            {professions.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
+            <ProfessionSelectOptions professions={professions} />
           </SelectContent>
         </Select>
       </div>
