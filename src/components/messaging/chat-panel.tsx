@@ -8,9 +8,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn, getInitials } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { sendMessage, markMessagesRead } from "@/lib/actions/messaging";
-import type { ActionResult } from "@/lib/actions/auth";
+import {
+  sendMessage,
+  markMessagesRead,
+  type SendMessageResult,
+} from "@/lib/actions/messaging";
 import type { Message, Conversation } from "@/types/database";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 interface ChatPanelProps {
   conversation: Conversation;
@@ -19,7 +23,13 @@ interface ChatPanelProps {
   initialMessages: Message[];
 }
 
-const initial: ActionResult = {};
+type PresencePayload = {
+  user_id: string;
+  typing?: boolean;
+  online_at?: string;
+};
+
+const initial: SendMessageResult = {};
 
 export function ChatPanel({
   conversation,
@@ -31,6 +41,9 @@ export function ChatPanel({
   const [typing, setTyping] = useState(false);
   const [online, setOnline] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const joinedRef = useRef(false);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [state, action, pending] = useActionState(sendMessage, initial);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -45,11 +58,20 @@ export function ChatPanel({
   useEffect(() => {
     if (state.success) {
       formRef.current?.reset();
+      // Realtime gecikse bile gönderilen mesajı hemen göster
+      const sent = state.message;
+      if (sent) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === sent.id)) return prev;
+          return [...prev, sent];
+        });
+      }
     }
   }, [state]);
 
   useEffect(() => {
     const supabase = createClient();
+    joinedRef.current = false;
 
     const channel = supabase
       .channel(`chat:${conversation.id}`)
@@ -73,45 +95,58 @@ export function ChatPanel({
         }
       )
       .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
-        const others = Object.values(state)
+        const presence = channel.presenceState();
+        const others = Object.values(presence)
           .flat()
-          .filter(
-            (p) =>
-              (p as unknown as { user_id: string }).user_id !== currentUserId
-          );
+          .map((p) => p as unknown as PresencePayload)
+          .filter((p) => p.user_id !== currentUserId);
         setOnline(others.length > 0);
-        setTyping(
-          others.some(
-            (p) => (p as unknown as { typing?: boolean }).typing === true
-          )
-        );
+        setTyping(others.some((p) => p.typing === true));
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
+          joinedRef.current = true;
+          channelRef.current = channel;
           await channel.track({
             user_id: currentUserId,
             typing: false,
             online_at: new Date().toISOString(),
           });
+        } else {
+          joinedRef.current = false;
         }
       });
 
+    channelRef.current = channel;
+
     return () => {
-      supabase.removeChannel(channel);
+      joinedRef.current = false;
+      channelRef.current = null;
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      void supabase.removeChannel(channel);
     };
   }, [conversation.id, currentUserId]);
 
-  async function handleTyping() {
-    const supabase = createClient();
-    const channel = supabase.channel(`chat:${conversation.id}`);
-    await channel.track({
+  function handleTyping() {
+    const channel = channelRef.current;
+    if (!channel || !joinedRef.current) return;
+
+    void channel.track({
       user_id: currentUserId,
       typing: true,
       online_at: new Date().toISOString(),
     });
-    setTimeout(async () => {
-      await channel.track({
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      if (!channelRef.current || !joinedRef.current) return;
+      void channelRef.current.track({
         user_id: currentUserId,
         typing: false,
         online_at: new Date().toISOString(),
@@ -161,7 +196,9 @@ export function ChatPanel({
                   <p
                     className={cn(
                       "mt-1 text-[10px]",
-                      mine ? "text-primary-foreground/70" : "text-muted-foreground"
+                      mine
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground"
                     )}
                   >
                     {new Date(msg.created_at).toLocaleTimeString("tr-TR", {
@@ -197,7 +234,12 @@ export function ChatPanel({
             }
           }}
         />
-        <Button type="submit" size="icon" className="h-11 w-11 shrink-0" disabled={pending}>
+        <Button
+          type="submit"
+          size="icon"
+          className="h-11 w-11 shrink-0"
+          disabled={pending}
+        >
           {pending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (

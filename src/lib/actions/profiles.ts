@@ -335,31 +335,6 @@ export async function toggleFavorite(workerId: string): Promise<ActionResult> {
     worker_id: workerId,
   });
 
-  const { data: worker } = await supabase
-    .from("workers")
-    .select("profile_id, first_name")
-    .eq("id", workerId)
-    .single();
-
-  if (worker) {
-    const { data: companyInfo } = await supabase
-      .from("companies")
-      .select("name")
-      .eq("id", company.id)
-      .single();
-
-    await supabase.from("notifications").insert({
-      user_id: worker.profile_id,
-      type: "favorite",
-      title: "PATRON SENİ KAPMAK İSTİYOR 🔥",
-      body: companyInfo?.name
-        ? `${companyInfo.name} seni favorilerine ekledi. Hadi, fırsatı kaçırma!`
-        : "Bir firma seni favorilerine ekledi. Hadi, fırsatı kaçırma!",
-      link: "/isci/bildirimler",
-      metadata: { company_id: company.id },
-    });
-  }
-
   revalidatePath("/firma/favoriler");
   return { success: "Favorilere eklendi" };
 }

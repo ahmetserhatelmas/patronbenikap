@@ -4,11 +4,14 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { messageSchema } from "@/lib/validations/auth";
 import type { ActionResult } from "@/lib/actions/auth";
+import type { Message } from "@/types/database";
+
+export type SendMessageResult = ActionResult & { message?: Message };
 
 export async function sendMessage(
-  _prev: ActionResult,
+  _prev: SendMessageResult,
   formData: FormData
-): Promise<ActionResult> {
+): Promise<SendMessageResult> {
   const parsed = messageSchema.safeParse({
     content: formData.get("content"),
     conversation_id: formData.get("conversation_id") || undefined,
@@ -63,11 +66,15 @@ export async function sendMessage(
 
   if (!conversationId) return { error: "Konuşma bulunamadı" };
 
-  const { error } = await supabase.from("messages").insert({
-    conversation_id: conversationId,
-    sender_id: user.id,
-    content: parsed.data.content,
-  });
+  const { data: message, error } = await supabase
+    .from("messages")
+    .insert({
+      conversation_id: conversationId,
+      sender_id: user.id,
+      content: parsed.data.content,
+    })
+    .select("*")
+    .single();
 
   if (error) return { error: error.message };
 
@@ -76,36 +83,9 @@ export async function sendMessage(
     .update({ last_message_at: new Date().toISOString() })
     .eq("id", conversationId);
 
-  const { data: conv } = await supabase
-    .from("conversations")
-    .select("company_id, worker_id, company:companies(profile_id, name), worker:workers(profile_id, first_name)")
-    .eq("id", conversationId)
-    .single();
-
-  if (conv) {
-    const company = conv.company as unknown as { profile_id: string; name: string };
-    const worker = conv.worker as unknown as { profile_id: string; first_name: string };
-    const fromCompany = user.id === company.profile_id;
-    const recipientId = fromCompany ? worker.profile_id : company.profile_id;
-
-    await supabase.from("notifications").insert({
-      user_id: recipientId,
-      type: "message",
-      title: fromCompany
-        ? "PATRON SENİ KAPMAK İSTİYOR 🔥"
-        : "Yeni mesaj",
-      body: fromCompany
-        ? `${company.name}: ${parsed.data.content.slice(0, 80)}`
-        : parsed.data.content.slice(0, 100),
-      link: fromCompany
-        ? `/isci/mesajlar?c=${conversationId}`
-        : `/firma/mesajlar?c=${conversationId}`,
-    });
-  }
-
   revalidatePath("/firma/mesajlar");
   revalidatePath("/isci/mesajlar");
-  return { success: "Gönderildi" };
+  return { success: "Gönderildi", message: message as Message };
 }
 
 export async function markMessagesRead(conversationId: string) {
@@ -134,7 +114,8 @@ export async function markNotificationRead(id: string) {
     .from("notifications")
     .update({ is_read: true })
     .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .eq("type", "view");
 
   revalidatePath("/isci/bildirimler");
 }
@@ -150,6 +131,7 @@ export async function markAllNotificationsRead() {
     .from("notifications")
     .update({ is_read: true })
     .eq("user_id", user.id)
+    .eq("type", "view")
     .eq("is_read", false);
 
   revalidatePath("/isci/bildirimler");

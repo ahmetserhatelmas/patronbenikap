@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import type { Profile } from "@/types/database";
 import { signOut } from "@/lib/actions/auth";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
+import { useUnreadMessages } from "@/hooks/use-unread-messages";
 
 interface HeaderProps {
   profile?: Profile | null;
@@ -33,6 +34,8 @@ export function Header({
     profile?.role === "worker"
       ? Math.max(unreadNotifications, liveNotifs)
       : unreadNotifications;
+  const liveMessages = useUnreadMessages(profile?.id);
+  const messageCount = Math.max(unreadMessages, liveMessages);
 
   const panelHref =
     profile?.role === "company"
@@ -101,9 +104,9 @@ export function Header({
                 className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <MessageSquare className="h-5 w-5" />
-                {unreadMessages > 0 && (
+                {messageCount > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-orange px-1 text-[10px] font-bold text-white">
-                    {unreadMessages}
+                    {messageCount}
                   </span>
                 )}
               </Link>

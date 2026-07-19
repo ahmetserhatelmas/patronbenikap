@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { Bell, CheckCheck } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,7 @@ export default async function NotificationsPage() {
     .from("notifications")
     .select("*")
     .eq("user_id", profile.id)
+    .eq("type", "view")
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -46,7 +46,7 @@ export default async function NotificationsPage() {
             <Bell className="mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="font-medium">Bildirim yok</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Firma aktiviteleri burada görünecek
+              Firmalar profilini görüntülediğinde burada göreceksin
             </p>
           </div>
         ) : (
@@ -84,14 +84,6 @@ export default async function NotificationsPage() {
                         <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
                       )}
                     </div>
-                    {n.link && (
-                      <Link
-                        href={n.link}
-                        className="mt-2 inline-block text-xs text-primary hover:underline"
-                      >
-                        Detay →
-                      </Link>
-                    )}
                   </button>
                 </form>
               </li>

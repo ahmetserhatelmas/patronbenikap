@@ -39,6 +39,7 @@ export default async function WorkerDashboard() {
     .from("notifications")
     .select("*", { count: "exact", head: true })
     .eq("user_id", profile.id)
+    .eq("type", "view")
     .eq("is_read", false);
 
   const { count: uniqueCompanyViews } = await supabase
