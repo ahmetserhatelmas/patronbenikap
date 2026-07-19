@@ -22,44 +22,62 @@ export const forgotPasswordSchema = z.object({
   email: z.string().email("Geçerli bir e-posta girin"),
 });
 
+/** Empty form values → null (optional enums / nullable numbers). */
+function emptyToNull(value: unknown) {
+  if (value === "" || value === undefined) return null;
+  return value;
+}
+
+const educationEnum = z.enum([
+  "ilkokul",
+  "ortaokul",
+  "lise",
+  "onlisans",
+  "lisans",
+  "yuksek_lisans",
+  "doktora",
+]);
+
+const availabilityEnum = z.enum([
+  "hemen",
+  "1_hafta",
+  "2_hafta",
+  "1_ay",
+  "esnek",
+]);
+
+const militaryEnum = z.enum(["yapildi", "tecilli", "muaf", "yapilmadi"]);
+
 export const workerProfileSchema = z.object({
   first_name: z.string().min(2, "Ad gerekli"),
   last_name: z.string().min(2, "Soyad gerekli"),
-  age: z.coerce.number().min(16, "Yaş en az 16 olmalı").max(80).optional().nullable(),
+  age: z.preprocess(
+    emptyToNull,
+    z.coerce.number().min(16, "Yaş en az 16 olmalı").max(80).nullable().optional()
+  ),
   city: z.string().min(1, "Şehir seçmelisin"),
-  district: z.string().optional().nullable(),
+  district: z.preprocess(emptyToNull, z.string().nullable().optional()),
   profession_id: z.string().uuid("Meslek seçmelisin"),
   experience_years: z.coerce.number().min(0).max(50).default(0),
-  education: z
-    .enum([
-      "ilkokul",
-      "ortaokul",
-      "lise",
-      "onlisans",
-      "lisans",
-      "yuksek_lisans",
-      "doktora",
-    ])
-    .optional()
-    .nullable(),
+  education: z.preprocess(emptyToNull, educationEnum.nullable().optional()),
   languages: z.array(z.string()).default([]),
   driver_license: z.array(z.string()).default([]),
-  military_status: z
-    .enum(["yapildi", "tecilli", "muaf", "yapilmadi"])
-    .optional()
-    .nullable(),
+  military_status: z.preprocess(emptyToNull, militaryEnum.nullable().optional()),
   currently_working: z.boolean().default(false),
   shift_work: z.boolean().default(false),
-  expected_salary: z.coerce.number().min(0).optional().nullable(),
-  availability: z
-    .enum(["hemen", "1_hafta", "2_hafta", "1_ay", "esnek"])
-    .optional()
-    .nullable(),
+  expected_salary: z.preprocess(
+    emptyToNull,
+    z.coerce.number().min(0).nullable().optional()
+  ),
+  availability: z.preprocess(emptyToNull, availabilityEnum.nullable().optional()),
   about_me: z.string().min(20, "Hakkımda en az 20 karakter olmalı").max(2000),
   specializations: z.array(z.string()).default([]),
-  whatsapp: z.string().optional().nullable(),
+  whatsapp: z.preprocess(emptyToNull, z.string().nullable().optional()),
   phone: z.string().min(10, "Telefon gerekli"),
-  email: z.string().email("Geçerli e-posta girin").optional().nullable().or(z.literal("")),
+  email: z.preprocess(
+    emptyToNull,
+    z.string().email("Geçerli e-posta girin").nullable().optional()
+  ),
   is_visible: z.boolean().default(true),
   skill_ids: z.array(z.string()).default([]),
 });

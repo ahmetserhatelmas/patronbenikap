@@ -13,41 +13,75 @@ import {
 import type { ActionResult } from "@/lib/actions/auth";
 import type { WorkerSearchParams } from "@/types/database";
 
+function str(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : "";
+}
+
 export async function upsertWorkerProfile(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
-  const skillIds = formData.getAll("skill_ids") as string[];
-  const languages = formData.getAll("languages") as string[];
-  const driverLicense = formData.getAll("driver_license") as string[];
-  const specializationsRaw = (formData.get("specializations") as string) || "";
+  const skillIds = formData.getAll("skill_ids").filter((v): v is string => typeof v === "string");
+  const languages = formData.getAll("languages").filter((v): v is string => typeof v === "string");
+  const driverLicense = formData
+    .getAll("driver_license")
+    .filter((v): v is string => typeof v === "string");
+  const specializationsRaw = str(formData, "specializations");
   const specializations = specializationsRaw
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
 
+  // Keep submitted values as strings (not null) so required fields get Turkish errors
+  // and the form can restore Select / checkbox state after validation fails.
+  const values = {
+    first_name: str(formData, "first_name"),
+    last_name: str(formData, "last_name"),
+    age: str(formData, "age"),
+    city: str(formData, "city"),
+    district: str(formData, "district"),
+    profession_id: str(formData, "profession_id"),
+    experience_years: str(formData, "experience_years"),
+    education: str(formData, "education"),
+    military_status: str(formData, "military_status"),
+    expected_salary: str(formData, "expected_salary"),
+    availability: str(formData, "availability"),
+    about_me: str(formData, "about_me"),
+    specializations: specializationsRaw,
+    whatsapp: str(formData, "whatsapp"),
+    phone: str(formData, "phone"),
+    email: str(formData, "email"),
+    currently_working: str(formData, "currently_working") || "false",
+    shift_work: str(formData, "shift_work") || "false",
+    is_visible: str(formData, "is_visible") || "true",
+    languages: languages.join("|"),
+    driver_license: driverLicense.join("|"),
+    skill_ids: skillIds.join("|"),
+  };
+
   const parsed = workerProfileSchema.safeParse({
-    first_name: formData.get("first_name"),
-    last_name: formData.get("last_name"),
-    age: formData.get("age") || null,
-    city: formData.get("city") || null,
-    district: formData.get("district") || null,
-    profession_id: formData.get("profession_id") || null,
-    experience_years: formData.get("experience_years") || 0,
-    education: formData.get("education") || null,
+    first_name: values.first_name,
+    last_name: values.last_name,
+    age: values.age,
+    city: values.city,
+    district: values.district,
+    profession_id: values.profession_id,
+    experience_years: values.experience_years || 0,
+    education: values.education,
     languages,
     driver_license: driverLicense,
-    military_status: formData.get("military_status") || null,
-    currently_working: formData.get("currently_working") === "true",
-    shift_work: formData.get("shift_work") === "true",
-    expected_salary: formData.get("expected_salary") || null,
-    availability: formData.get("availability") || null,
-    about_me: formData.get("about_me") || null,
+    military_status: values.military_status,
+    currently_working: values.currently_working === "true",
+    shift_work: values.shift_work === "true",
+    expected_salary: values.expected_salary,
+    availability: values.availability,
+    about_me: values.about_me,
     specializations,
-    whatsapp: formData.get("whatsapp") || null,
-    phone: formData.get("phone") || null,
-    email: formData.get("email") || null,
-    is_visible: formData.get("is_visible") !== "false",
+    whatsapp: values.whatsapp,
+    phone: values.phone,
+    email: values.email,
+    is_visible: values.is_visible !== "false",
     skill_ids: skillIds,
   });
 
@@ -62,6 +96,7 @@ export async function upsertWorkerProfile(
     return {
       error: "Lütfen işaretli alanları doldur",
       fieldErrors,
+      values,
     };
   }
 

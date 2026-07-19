@@ -108,6 +108,43 @@ export function WorkerProfileForm({
     if (state.error) toast.error(state.error);
   }, [state]);
 
+  // Restore all fields after validation error (React form actions can wipe Select/checkbox state)
+  useEffect(() => {
+    const v = state.values;
+    if (!v || !state.error) return;
+
+    if (v.first_name != null) setFirstName(v.first_name);
+    if (v.last_name != null) setLastName(v.last_name);
+    if (v.age != null) setAge(digitsOnly(v.age));
+    if (v.district != null) setDistrict(v.district);
+    if (v.city != null) setCity(v.city);
+    if (v.profession_id != null) setProfessionId(v.profession_id);
+    if (v.education != null) setEducation(v.education);
+    if (v.availability != null) setAvailability(v.availability);
+    if (v.military_status != null) setMilitary(v.military_status);
+    if (v.experience_years != null) setExperience(digitsOnly(v.experience_years));
+    if (v.expected_salary != null) setSalary(digitsOnly(v.expected_salary));
+    if (v.about_me != null) setAboutMe(v.about_me);
+    if (v.specializations != null) setSpecializations(v.specializations);
+    if (v.phone != null) setPhone(v.phone);
+    if (v.whatsapp != null) setWhatsapp(v.whatsapp);
+    if (v.email != null) setEmail(v.email);
+    if (v.currently_working != null) {
+      setCurrentlyWorking(v.currently_working === "true");
+    }
+    if (v.shift_work != null) setShiftWork(v.shift_work === "true");
+    if (v.is_visible != null) setIsVisible(v.is_visible !== "false");
+    if (v.languages != null) {
+      setLanguages(v.languages.split("|").filter(Boolean));
+    }
+    if (v.driver_license != null) {
+      setLicenses(v.driver_license.split("|").filter(Boolean));
+    }
+    if (v.skill_ids != null) {
+      setSelectedSkills(v.skill_ids.split("|").filter(Boolean));
+    }
+  }, [state]);
+
   useEffect(() => {
     if (!professionId) {
       setSalaryInfo(null);
@@ -237,7 +274,7 @@ export function WorkerProfileForm({
             <Label className={errors.city ? "text-destructive" : undefined}>
               Şehir *
             </Label>
-            <Select value={city} onValueChange={setCity}>
+            <Select value={city || undefined} onValueChange={setCity}>
               <SelectTrigger className={errors.city ? "border-destructive" : ""}>
                 <SelectValue placeholder="Şehir seç" />
               </SelectTrigger>
@@ -271,7 +308,10 @@ export function WorkerProfileForm({
             >
               Meslek *
             </Label>
-            <Select value={professionId} onValueChange={setProfessionId}>
+            <Select
+              value={professionId || undefined}
+              onValueChange={setProfessionId}
+            >
               <SelectTrigger
                 className={errors.profession_id ? "border-destructive" : ""}
               >
@@ -334,7 +374,7 @@ export function WorkerProfileForm({
           </div>
           <div className="space-y-2">
             <Label>Eğitim</Label>
-            <Select value={education} onValueChange={setEducation}>
+            <Select value={education || undefined} onValueChange={setEducation}>
               <SelectTrigger>
                 <SelectValue placeholder="Seviye seç" />
               </SelectTrigger>
@@ -349,7 +389,10 @@ export function WorkerProfileForm({
           </div>
           <div className="space-y-2">
             <Label>Müsaitlik</Label>
-            <Select value={availability} onValueChange={setAvailability}>
+            <Select
+              value={availability || undefined}
+              onValueChange={setAvailability}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Seç" />
               </SelectTrigger>
@@ -364,7 +407,7 @@ export function WorkerProfileForm({
           </div>
           <div className="space-y-2">
             <Label>Askerlik</Label>
-            <Select value={military} onValueChange={setMilitary}>
+            <Select value={military || undefined} onValueChange={setMilitary}>
               <SelectTrigger>
                 <SelectValue placeholder="Seç" />
               </SelectTrigger>
