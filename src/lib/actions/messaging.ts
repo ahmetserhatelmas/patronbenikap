@@ -101,6 +101,9 @@ export async function markMessagesRead(conversationId: string) {
     .eq("conversation_id", conversationId)
     .neq("sender_id", user.id)
     .eq("is_read", false);
+
+  revalidatePath("/firma/mesajlar");
+  revalidatePath("/isci/mesajlar");
 }
 
 export async function markNotificationRead(id: string) {

@@ -7,6 +7,7 @@ import { Loader2, Building2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { signUp, type ActionResult } from "@/lib/actions/auth";
 
@@ -17,6 +18,7 @@ export function RegisterForm() {
   const defaultRole =
     searchParams.get("role") === "company" ? "company" : "worker";
   const [role, setRole] = useState<"worker" | "company">(defaultRole);
+  const [acceptLegal, setAcceptLegal] = useState(false);
   const [state, action, pending] = useActionState(signUp, initial);
 
   const values = state.values ?? {};
@@ -130,12 +132,93 @@ export function RegisterForm() {
             autoComplete="new-password"
           />
         </div>
+
+        <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+          <label className="flex items-start gap-3 text-sm leading-snug">
+            <Checkbox
+              checked={acceptLegal}
+              onCheckedChange={(v) => setAcceptLegal(v === true)}
+              className="mt-0.5"
+            />
+            <input
+              type="hidden"
+              name="acceptLegal"
+              value={acceptLegal ? "true" : ""}
+            />
+            <span className="text-muted-foreground">
+              {role === "worker" ? (
+                <>
+                  <Link
+                    href="/kullanim-kosullari"
+                    target="_blank"
+                    className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                  >
+                    Kullanım Koşulları
+                  </Link>
+                  ,{" "}
+                  <Link
+                    href="/aydinlatma-metni"
+                    target="_blank"
+                    className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                  >
+                    Aydınlatma Metni
+                  </Link>{" "}
+                  ve{" "}
+                  <Link
+                    href="/gizlilik"
+                    target="_blank"
+                    className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                  >
+                    Gizlilik Politikası
+                  </Link>
+                  ’nı okudum; kişisel verilerimin işlenmesini ve profilim
+                  görünürken ad, meslek, telefon/WhatsApp gibi bilgilerimin
+                  kayıtlı firmalarca görülebileceğini kabul ediyorum.
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/kullanim-kosullari"
+                    target="_blank"
+                    className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                  >
+                    Kullanım Koşulları
+                  </Link>
+                  ,{" "}
+                  <Link
+                    href="/aydinlatma-metni"
+                    target="_blank"
+                    className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                  >
+                    Aydınlatma Metni
+                  </Link>{" "}
+                  ve{" "}
+                  <Link
+                    href="/gizlilik"
+                    target="_blank"
+                    className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                  >
+                    Gizlilik Politikası
+                  </Link>
+                  ’nı okudum; firma bilgilerimin işlenmesini ve işçilerden
+                  edindiğim verileri yalnızca işe alım amacıyla
+                  kullanacağımı kabul ediyorum.
+                </>
+              )}
+            </span>
+          </label>
+        </div>
+
         {typeof state.error === "string" && state.error.length > 0 && (
           <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {state.error}
           </p>
         )}
-        <Button type="submit" className="w-full h-11" disabled={pending}>
+        <Button
+          type="submit"
+          className="w-full h-11"
+          disabled={pending || !acceptLegal}
+        >
           {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Kayıt Ol
         </Button>

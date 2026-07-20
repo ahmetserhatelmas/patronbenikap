@@ -5,6 +5,11 @@ export const loginSchema = z.object({
   password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
 });
 
+/** Checkbox: FormData "on" / "true" → true */
+function checkboxTrue(value: unknown) {
+  return value === true || value === "on" || value === "true" || value === "1";
+}
+
 export const registerSchema = z
   .object({
     email: z.string().email("Geçerli bir e-posta girin"),
@@ -12,6 +17,13 @@ export const registerSchema = z
     confirmPassword: z.string(),
     fullName: z.string().min(2, "Ad soyad gerekli"),
     role: z.enum(["worker", "company"]),
+    acceptLegal: z.preprocess(
+      checkboxTrue,
+      z.literal(true, {
+        message:
+          "Devam etmek için kullanım koşulları ve gizlilik metinlerini kabul etmelisiniz",
+      })
+    ),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "Şifreler eşleşmiyor",
@@ -73,7 +85,12 @@ export const workerProfileSchema = z.object({
   about_me: z.string().min(20, "Hakkımda en az 20 karakter olmalı").max(2000),
   specializations: z.array(z.string()).default([]),
   whatsapp: z.preprocess(emptyToNull, z.string().nullable().optional()),
-  phone: z.string().min(10, "Telefon gerekli"),
+  phone: z
+    .string()
+    .regex(
+      /^5\d{9}$/,
+      "Telefonu başında 0 olmadan 10 hane yazın (örn. 5xxxxxxxxx)"
+    ),
   email: z.preprocess(
     emptyToNull,
     z.string().email("Geçerli e-posta girin").nullable().optional()

@@ -26,7 +26,14 @@ import {
   DRIVER_LICENSES,
   LANGUAGES,
 } from "@/lib/constants";
-import { cn, formatSalary, formatTrGrouped, digitsOnly, getInitials } from "@/lib/utils";
+import {
+  cn,
+  formatSalary,
+  formatTrGrouped,
+  digitsOnly,
+  getInitials,
+  normalizeTrPhoneInput,
+} from "@/lib/utils";
 import {
   upsertWorkerProfile,
   getSalaryForProfession,
@@ -79,8 +86,9 @@ export function WorkerProfileForm({
   const [specializations, setSpecializations] = useState(
     worker?.specializations?.join(", ") ?? ""
   );
-  const [phone, setPhone] = useState(worker?.phone ?? "");
-  const [whatsapp, setWhatsapp] = useState(worker?.whatsapp ?? "");
+  const [phone, setPhone] = useState(
+    normalizeTrPhoneInput(worker?.phone ?? "")
+  );
   const [email, setEmail] = useState(worker?.email ?? "");
   const [salaryInfo, setSalaryInfo] = useState<SalaryRange | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<string[]>(
@@ -126,8 +134,7 @@ export function WorkerProfileForm({
     if (v.expected_salary != null) setSalary(digitsOnly(v.expected_salary));
     if (v.about_me != null) setAboutMe(v.about_me);
     if (v.specializations != null) setSpecializations(v.specializations);
-    if (v.phone != null) setPhone(v.phone);
-    if (v.whatsapp != null) setWhatsapp(v.whatsapp);
+    if (v.phone != null) setPhone(normalizeTrPhoneInput(v.phone));
     if (v.email != null) setEmail(v.email);
     if (v.currently_working != null) {
       setCurrentlyWorking(v.currently_working === "true");
@@ -533,21 +540,44 @@ export function WorkerProfileForm({
 
       <Section title="İletişim">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field
-            label="Telefon"
-            name="phone"
-            value={phone}
-            onChange={setPhone}
-            error={errors.phone}
-            required
-          />
-          <Field
-            label="WhatsApp"
-            name="whatsapp"
-            value={whatsapp}
-            onChange={setWhatsapp}
-            error={errors.whatsapp}
-          />
+          <div className="space-y-2">
+            <Label
+              htmlFor="phone"
+              className={errors.phone ? "text-destructive" : undefined}
+            >
+              Telefon / WhatsApp *
+            </Label>
+            <div className="flex">
+              <span className="inline-flex items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
+                +90
+              </span>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputMode="numeric"
+                value={phone}
+                onChange={(e) => setPhone(normalizeTrPhoneInput(e.target.value))}
+                required
+                placeholder="5xx xxx xx xx"
+                maxLength={10}
+                className={
+                  errors.phone
+                    ? "rounded-l-none border-destructive"
+                    : "rounded-l-none"
+                }
+                aria-invalid={!!errors.phone}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Başında 0 olmadan yazın. WhatsApp için +90 otomatik eklenir.
+            </p>
+            {errors.phone && (
+              <p className="text-xs text-destructive">{errors.phone}</p>
+            )}
+            {/* WhatsApp = telefon; ayrı alan yok */}
+            <input type="hidden" name="whatsapp" value={phone} />
+          </div>
           <Field
             label="E-posta"
             name="email"
@@ -555,7 +585,6 @@ export function WorkerProfileForm({
             value={email}
             onChange={setEmail}
             error={errors.email}
-            className="sm:col-span-2"
           />
         </div>
         <div className="mt-4 flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-4">

@@ -38,6 +38,43 @@ export function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
 }
 
+/**
+ * Normalize a TR mobile for form storage: digits only, no leading 0, no +90.
+ * e.g. "0537 826 86 35" → "5378268635"
+ */
+export function normalizeTrPhoneInput(value: string): string {
+  let digits = digitsOnly(value);
+  if (digits.startsWith("90") && digits.length > 10) {
+    digits = digits.slice(2);
+  }
+  if (digits.startsWith("0")) {
+    digits = digits.slice(1);
+  }
+  return digits.slice(0, 10);
+}
+
+/**
+ * WhatsApp / wa.me format with Turkey country code (no +).
+ * e.g. "5378268635" → "905378268635"
+ */
+export function toWhatsAppPhone(phone?: string | null): string | null {
+  if (!phone) return null;
+  let digits = digitsOnly(phone);
+  if (!digits) return null;
+  if (digits.startsWith("0")) digits = digits.slice(1);
+  if (digits.startsWith("90") && digits.length >= 12) return digits;
+  return `90${digits}`;
+}
+
+/** Display format: "+90 537 826 86 35" */
+export function formatTrPhoneDisplay(phone?: string | null): string {
+  const local = normalizeTrPhoneInput(phone ?? "");
+  if (local.length !== 10) {
+    return local ? `+90 ${local}` : "";
+  }
+  return `+90 ${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6, 8)} ${local.slice(8, 10)}`;
+}
+
 /** Format integer digits with Turkish thousand separators: 34997 → 34.997 */
 export function formatTrGrouped(digits: string): string {
   const clean = digitsOnly(digits);

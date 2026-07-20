@@ -8,6 +8,7 @@ import {
 } from "@/lib/validations/auth";
 import {
   calculateProfileCompletion,
+  normalizeTrPhoneInput,
   slugify,
 } from "@/lib/utils";
 import type { ActionResult } from "@/lib/actions/auth";
@@ -49,8 +50,11 @@ export async function upsertWorkerProfile(
     availability: str(formData, "availability"),
     about_me: str(formData, "about_me"),
     specializations: specializationsRaw,
-    whatsapp: str(formData, "whatsapp"),
-    phone: str(formData, "phone"),
+    phone: normalizeTrPhoneInput(str(formData, "phone")),
+    // WhatsApp ayrı girilmez; telefon numarasıyla aynı tutulur
+    whatsapp: normalizeTrPhoneInput(
+      str(formData, "phone") || str(formData, "whatsapp")
+    ),
     email: str(formData, "email"),
     currently_working: str(formData, "currently_working") || "false",
     shift_work: str(formData, "shift_work") || "false",

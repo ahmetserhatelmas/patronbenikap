@@ -1,11 +1,10 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { ChatPanel } from "@/components/messaging/chat-panel";
+import { ConversationList } from "@/components/messaging/conversation-list";
 import { NewMessageForm } from "@/components/messaging/new-message-form";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/actions/auth";
-import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Mesajlar" };
 
@@ -89,36 +88,22 @@ export default async function CompanyMessagesPage({
                 Henüz konuşma yok
               </p>
             ) : (
-              <ul className="divide-y divide-border/60">
-                {conversations.map((conv) => {
+              <ConversationList
+                currentUserId={profile.id}
+                activeId={activeId}
+                items={conversations.map((conv) => {
                   const w = conv.worker as unknown as {
                     first_name: string;
                     last_name: string;
                   };
-                  return (
-                    <li key={conv.id}>
-                      <Link
-                        href={`/firma/mesajlar?c=${conv.id}`}
-                        className={cn(
-                          "block px-4 py-3 transition-colors hover:bg-muted/50",
-                          activeId === conv.id && "bg-primary/5"
-                        )}
-                      >
-                        <p className="text-sm font-medium">
-                          {w?.first_name} {w?.last_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {conv.last_message_at
-                            ? new Date(conv.last_message_at).toLocaleDateString(
-                                "tr-TR"
-                              )
-                            : "Yeni"}
-                        </p>
-                      </Link>
-                    </li>
-                  );
+                  return {
+                    id: conv.id,
+                    name: `${w?.first_name ?? ""} ${w?.last_name ?? ""}`.trim() || "İşçi",
+                    lastMessageAt: conv.last_message_at,
+                    href: `/firma/mesajlar?c=${conv.id}`,
+                  };
                 })}
-              </ul>
+              />
             )}
           </aside>
 

@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Outfit } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { LegalNoticeBanner } from "@/components/legal/legal-notice-banner";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -71,6 +72,7 @@ export default function RootLayout({
         >
           <TooltipProvider>
             {children}
+            <LegalNoticeBanner />
             <Toaster richColors position="top-center" />
           </TooltipProvider>
         </ThemeProvider>

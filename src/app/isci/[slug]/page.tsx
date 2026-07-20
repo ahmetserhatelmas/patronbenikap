@@ -69,53 +69,19 @@ export default async function WorkerPublicPage({ params }: PageProps) {
     notFound();
   }
 
-  // Increment view + notify worker (with company name)
+  // Increment view + notify (security definer RPC; bypasses worker update RLS)
+  let viewCount = worker.view_count ?? 0;
   if (profile?.role === "company" && worker.profile_id !== profile.id) {
-    await supabase
-      .from("workers")
-      .update({ view_count: worker.view_count + 1 })
-      .eq("id", worker.id);
-
-    const { data: company } = await supabase
-      .from("companies")
-      .select("id, name")
-      .eq("profile_id", profile.id)
-      .maybeSingle();
-
-    if (company) {
-      const { data: previous } = await supabase
-        .from("recently_viewed")
-        .select("id, viewed_at")
-        .eq("company_id", company.id)
-        .eq("worker_id", worker.id)
-        .maybeSingle();
-
-      await supabase.from("recently_viewed").upsert(
-        {
-          company_id: company.id,
-          worker_id: worker.id,
-          viewed_at: new Date().toISOString(),
-        },
-        { onConflict: "company_id,worker_id" }
-      );
-
-      // Notify on first view or if last view was > 12 hours ago
-      const shouldNotify =
-        !previous ||
-        Date.now() - new Date(previous.viewed_at).getTime() > 12 * 60 * 60 * 1000;
-
-      if (shouldNotify) {
-        await supabase.from("notifications").insert({
-          user_id: worker.profile_id,
-          type: "view",
-          title: `${company.name} seni inceledi`,
-          body: `${company.name} profiline baktı. Belki patron seni kapmak üzeredir!`,
-          link: "/isci/bildirimler",
-          metadata: { company_id: company.id, company_name: company.name },
-        });
-      }
+    const { data: newCount } = await supabase.rpc(
+      "record_worker_profile_view",
+      { p_worker_id: worker.id }
+    );
+    if (typeof newCount === "number") {
+      viewCount = newCount;
     }
   }
+
+  const workerWithViews = { ...worker, view_count: viewCount };
 
   let isFavorited = false;
   if (profile?.role === "company") {
@@ -155,7 +121,7 @@ export default async function WorkerPublicPage({ params }: PageProps) {
       <Header profile={profile} />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <PublicProfileView
-          worker={worker}
+          worker={workerWithViews}
           isCompany={profile?.role === "company"}
           isOwner={worker.profile_id === profile?.id}
           isFavorited={isFavorited}

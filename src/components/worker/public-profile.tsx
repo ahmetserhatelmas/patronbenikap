@@ -33,7 +33,13 @@ import {
   EDUCATION_LABELS,
   MILITARY_LABELS,
 } from "@/lib/constants";
-import { formatSalary, getInitials, absoluteUrl } from "@/lib/utils";
+import {
+  formatSalary,
+  getInitials,
+  absoluteUrl,
+  toWhatsAppPhone,
+  formatTrPhoneDisplay,
+} from "@/lib/utils";
 import { toggleFavorite } from "@/lib/actions/profiles";
 import type { Worker } from "@/types/database";
 
@@ -81,7 +87,7 @@ export function PublicProfileView({
     }
   }
 
-  const whatsapp = worker.whatsapp?.replace(/\D/g, "");
+  const whatsapp = toWhatsAppPhone(worker.whatsapp || worker.phone);
 
   return (
     <div className="space-y-8">
@@ -148,9 +154,9 @@ export function PublicProfileView({
           )}
           {worker.phone && (
             <Button asChild className="shadow-md shadow-primary/20">
-              <a href={`tel:${worker.phone}`}>
+              <a href={`tel:+${toWhatsAppPhone(worker.phone) ?? worker.phone}`}>
                 <Phone className="mr-1.5 h-4 w-4" />
-                Ara
+                Ara · {formatTrPhoneDisplay(worker.phone)}
               </a>
             </Button>
           )}

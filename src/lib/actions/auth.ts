@@ -65,6 +65,7 @@ export async function signUp(
     "confirmPassword",
     "fullName",
     "role",
+    "acceptLegal",
   ]);
 
   const parsed = registerSchema.safeParse({
@@ -73,6 +74,7 @@ export async function signUp(
     confirmPassword: formData.get("confirmPassword"),
     fullName: formData.get("fullName"),
     role: formData.get("role"),
+    acceptLegal: formData.get("acceptLegal"),
   });
 
   if (!parsed.success) {

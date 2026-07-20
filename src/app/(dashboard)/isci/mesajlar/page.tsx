@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { ChatPanel } from "@/components/messaging/chat-panel";
+import { ConversationList } from "@/components/messaging/conversation-list";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/actions/auth";
-import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Mesajlar" };
 
@@ -63,31 +62,19 @@ export default async function WorkerMessagesPage({
                 Henüz mesaj yok. Firmalar sana ulaşınca burada görünecek.
               </p>
             ) : (
-              <ul className="divide-y divide-border/60">
-                {conversations.map((conv) => {
+              <ConversationList
+                currentUserId={profile.id}
+                activeId={activeId}
+                items={conversations.map((conv) => {
                   const co = conv.company as unknown as { name: string };
-                  return (
-                    <li key={conv.id}>
-                      <Link
-                        href={`/isci/mesajlar?c=${conv.id}`}
-                        className={cn(
-                          "block px-4 py-3 transition-colors hover:bg-muted/50",
-                          activeId === conv.id && "bg-primary/5"
-                        )}
-                      >
-                        <p className="font-medium text-sm">{co?.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {conv.last_message_at
-                            ? new Date(conv.last_message_at).toLocaleDateString(
-                                "tr-TR"
-                              )
-                            : "Yeni"}
-                        </p>
-                      </Link>
-                    </li>
-                  );
+                  return {
+                    id: conv.id,
+                    name: co?.name ?? "Firma",
+                    lastMessageAt: conv.last_message_at,
+                    href: `/isci/mesajlar?c=${conv.id}`,
+                  };
                 })}
-              </ul>
+              />
             )}
           </aside>
 

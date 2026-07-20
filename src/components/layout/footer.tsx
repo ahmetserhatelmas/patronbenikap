@@ -49,6 +49,14 @@ export function Footer() {
           <h4 className="mb-3 text-sm font-semibold">Yasal</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
+              <Link
+                href="/aydinlatma-metni"
+                className="hover:text-primary transition-colors"
+              >
+                Aydınlatma Metni
+              </Link>
+            </li>
+            <li>
               <Link href="/gizlilik" className="hover:text-primary transition-colors">
                 Gizlilik
               </Link>
