@@ -47,13 +47,10 @@ export function Header({
   const messagesHref =
     profile?.role === "company" ? "/firma/mesajlar" : "/isci/mesajlar";
 
-  const showWorkerSearch =
-    !profile || profile.role === "company" || profile.role === "admin";
+  const showWorkerSearch = !profile || profile.role === "company";
 
   const workerSearchHref =
-    profile?.role === "company" || profile?.role === "admin"
-      ? "/firma/ara"
-      : "/kayit?role=company";
+    profile?.role === "company" ? "/firma/ara" : "/kayit?role=company";
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 glass">

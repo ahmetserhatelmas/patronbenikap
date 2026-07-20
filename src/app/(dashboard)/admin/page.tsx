@@ -7,10 +7,13 @@ import {
   Eye,
   Briefcase,
   Wallet,
+  FileText,
+  Tags,
 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { getCurrentProfile } from "@/lib/actions/auth";
 import { getAdminStats } from "@/lib/actions/admin";
+import { formatNumber } from "@/lib/utils";
 
 export const metadata = { title: "Admin" };
 
@@ -24,28 +27,28 @@ export default async function AdminPage() {
   const cards = [
     {
       label: "İşçiler",
-      value: stats?.workers ?? 0,
+      value: formatNumber(stats?.workers ?? 0),
       icon: Users,
       href: "/admin/kullanicilar",
       color: "text-primary bg-primary/10",
     },
     {
       label: "Firmalar",
-      value: stats?.companies ?? 0,
+      value: formatNumber(stats?.companies ?? 0),
       icon: Building2,
       href: "/admin/firmalar",
       color: "text-brand-orange bg-brand-orange/10",
     },
     {
       label: "Mesajlar",
-      value: stats?.messages ?? 0,
+      value: formatNumber(stats?.messages ?? 0),
       icon: MessageSquare,
       href: "/admin",
       color: "text-primary bg-primary/10",
     },
     {
-      label: "Görüntülenme",
-      value: stats?.views ?? 0,
+      label: "Profil görüntülenme",
+      value: formatNumber(stats?.views ?? 0),
       icon: Eye,
       href: "/admin",
       color: "text-brand-orange bg-brand-orange/10",
@@ -79,6 +82,12 @@ export default async function AdminPage() {
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           <AdminLink
+            href="/admin/ilanlar"
+            icon={FileText}
+            title="İlanlar"
+            desc="Profilleri gör, pasife al veya sil"
+          />
+          <AdminLink
             href="/admin/kullanicilar"
             icon={Users}
             title="Kullanıcılar"
@@ -95,6 +104,12 @@ export default async function AdminPage() {
             icon={Briefcase}
             title="Meslekler"
             desc="Meslek listesini düzenle"
+          />
+          <AdminLink
+            href="/admin/kategoriler"
+            icon={Tags}
+            title="Kategoriler"
+            desc="Meslek kategorilerini yönet"
           />
           <AdminLink
             href="/admin/maaslar"

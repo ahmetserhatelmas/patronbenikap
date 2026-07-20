@@ -32,6 +32,14 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface ProfessionCategory {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface Profession {
   id: string;
   name: string;
@@ -212,6 +220,11 @@ export interface Database {
       profiles: { Row: Profile; Insert: Partial<Profile>; Update: Partial<Profile> };
       workers: { Row: Worker; Insert: Partial<Worker>; Update: Partial<Worker> };
       companies: { Row: Company; Insert: Partial<Company>; Update: Partial<Company> };
+      profession_categories: {
+        Row: ProfessionCategory;
+        Insert: Partial<ProfessionCategory>;
+        Update: Partial<ProfessionCategory>;
+      };
       professions: { Row: Profession; Insert: Partial<Profession>; Update: Partial<Profession> };
       salary_ranges: { Row: SalaryRange; Insert: Partial<SalaryRange>; Update: Partial<SalaryRange> };
       skills: { Row: Skill; Insert: Partial<Skill>; Update: Partial<Skill> };

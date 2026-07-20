@@ -1,11 +1,15 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BadgeCheck } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/admin";
 import { getCurrentProfile } from "@/lib/actions/auth";
-import { approveCompany } from "@/lib/actions/admin";
+import {
+  approveCompany,
+  revokeCompanyVerification,
+} from "@/lib/actions/admin";
 
 export const metadata = { title: "Firmalar — Admin" };
 
@@ -13,11 +17,13 @@ export default async function AdminCompaniesPage() {
   const profile = await getCurrentProfile();
   if (!profile || profile.role !== "admin") redirect("/");
 
-  const supabase = await createClient();
-  const { data: companies } = await supabase
+  const admin = createServiceClient();
+  const { data: companies } = await admin
     .from("companies")
-    .select("*")
+    .select("*, profile:profiles(email)")
     .order("created_at", { ascending: false });
+
+  const pending = companies?.filter((c) => !c.is_verified).length ?? 0;
 
   return (
     <>
@@ -26,44 +32,86 @@ export default async function AdminCompaniesPage() {
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">
           Firmalar
         </h1>
+        <p className="mt-1 text-muted-foreground">
+          Firma hesaplarını doğrula. Onaylanan firmalarda mavi tik görünür.{" "}
+          {pending > 0 ? `${pending} bekleyen var.` : "Bekleyen yok."}
+        </p>
+
         <div className="mt-8 grid gap-4">
-          {companies?.map((c) => (
-            <div
-              key={c.id}
-              className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="font-semibold">{c.name}</h2>
-                  {c.is_verified && (
-                    <BadgeCheck className="h-5 w-5 text-primary" />
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {c.sector} · {c.city}
-                </p>
-                {c.is_verified ? (
-                  <Badge className="mt-2 bg-primary/15 text-primary">
-                    Doğrulandı
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="mt-2">
-                    Bekliyor
-                  </Badge>
-                )}
-              </div>
-              {!c.is_verified && (
-                <form
-                  action={async () => {
-                    "use server";
-                    await approveCompany(c.id);
-                  }}
+          {!companies?.length ? (
+            <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+              Henüz firma yok
+            </p>
+          ) : (
+            companies.map((c) => {
+              const owner = c.profile as unknown as { email: string } | null;
+              return (
+                <div
+                  key={c.id}
+                  className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <Button type="submit">Onayla</Button>
-                </form>
-              )}
-            </div>
-          ))}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/admin/firmalar/${c.id}`}
+                        className="font-semibold text-primary hover:underline"
+                      >
+                        {c.name}
+                      </Link>
+                      {c.is_verified && (
+                        <BadgeCheck className="h-5 w-5 text-primary" />
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {[c.sector, c.city].filter(Boolean).join(" · ") || "—"}
+                    </p>
+                    {owner?.email && (
+                      <p className="text-xs text-muted-foreground">
+                        {owner.email}
+                      </p>
+                    )}
+                    {c.is_verified ? (
+                      <Badge className="mt-2 bg-primary/15 text-primary">
+                        Doğrulandı
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="mt-2">
+                        Bekliyor
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button asChild variant="secondary" size="sm">
+                      <Link href={`/admin/firmalar/${c.id}`}>Detay</Link>
+                    </Button>
+                    {c.is_verified ? (
+                      <form
+                        action={async () => {
+                          "use server";
+                          await revokeCompanyVerification(c.id);
+                        }}
+                      >
+                        <Button type="submit" variant="outline" size="sm">
+                          Onayı kaldır
+                        </Button>
+                      </form>
+                    ) : (
+                      <form
+                        action={async () => {
+                          "use server";
+                          await approveCompany(c.id);
+                        }}
+                      >
+                        <Button type="submit" size="sm">
+                          Onayla
+                        </Button>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </main>
     </>
