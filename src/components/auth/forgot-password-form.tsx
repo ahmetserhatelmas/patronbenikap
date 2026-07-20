@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,8 @@ import { forgotPassword, type ActionResult } from "@/lib/actions/auth";
 const initial: ActionResult = {};
 
 export function ForgotPasswordForm() {
+  const searchParams = useSearchParams();
+  const linkError = searchParams.get("error");
   const [state, action, pending] = useActionState(forgotPassword, initial);
   const values = state.values ?? {};
 
@@ -31,6 +34,11 @@ export function ForgotPasswordForm() {
       action={action}
       className="space-y-4"
     >
+      {(linkError === "expired" || linkError === "auth") && (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          Link geçersiz veya süresi dolmuş. Yeni bir sıfırlama maili iste.
+        </p>
+      )}
       <div className="space-y-2">
         <Label htmlFor="email">E-posta</Label>
         <Input

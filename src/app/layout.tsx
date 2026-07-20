@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LegalNoticeBanner } from "@/components/legal/legal-notice-banner";
+import { AuthRecoveryListener } from "@/components/auth/auth-recovery-listener";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -20,7 +21,12 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    process.env.NEXT_PUBLIC_APP_URL &&
+      !/localhost|127\.0\.0\.1/.test(process.env.NEXT_PUBLIC_APP_URL)
+      ? process.env.NEXT_PUBLIC_APP_URL
+      : process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : "http://localhost:3000"
   ),
   title: {
     default: "Patron Beni Kap — İşi değil, iş seni bulsun",
@@ -72,6 +78,7 @@ export default function RootLayout({
         >
           <TooltipProvider>
             {children}
+            <AuthRecoveryListener />
             <LegalNoticeBanner />
             <Toaster richColors position="top-center" />
           </TooltipProvider>

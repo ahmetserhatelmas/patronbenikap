@@ -118,7 +118,69 @@ export function calculateProfileCompletion(worker: {
   return Math.round((filled / fields.length) * 100);
 }
 
+function isLocalHost(value: string) {
+  return /localhost|127\.0\.0\.1/.test(value);
+}
+
+/**
+ * Public site origin for auth redirects / emails.
+ * Prefer NEXT_PUBLIC_APP_URL; on Vercel use request host / production URL
+ * so password-reset links never point at localhost.
+ */
+export async function getSiteUrl(): Promise<string> {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  if (configured && !isLocalHost(configured)) {
+    return configured;
+  }
+
+  try {
+    const { headers } = await import("next/headers");
+    const h = await headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host");
+    const proto = (h.get("x-forwarded-proto") ?? "https").split(",")[0]?.trim();
+    if (host && !isLocalHost(host)) {
+      return `${proto || "https"}://${host}`;
+    }
+  } catch {
+    // Called outside a request (build / scripts)
+  }
+
+  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL?.replace(
+    /\/$/,
+    ""
+  );
+  if (production) {
+    return production.startsWith("http")
+      ? production
+      : `https://${production}`;
+  }
+
+  const vercel = process.env.VERCEL_URL?.replace(/\/$/, "");
+  if (vercel) {
+    return vercel.startsWith("http") ? vercel : `https://${vercel}`;
+  }
+
+  return configured || "http://localhost:3000";
+}
+
+/** Client/server-safe absolute URL (no request headers). */
 export function absoluteUrl(path: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  let base = configured || "http://localhost:3000";
+
+  if (typeof window !== "undefined" && (!configured || isLocalHost(configured))) {
+    base = window.location.origin;
+  } else if (configured && isLocalHost(configured)) {
+    const production = process.env.VERCEL_PROJECT_PRODUCTION_URL?.replace(
+      /\/$/,
+      ""
+    );
+    if (production) {
+      base = production.startsWith("http")
+        ? production
+        : `https://${production}`;
+    }
+  }
+
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }

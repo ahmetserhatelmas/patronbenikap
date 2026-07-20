@@ -8,6 +8,8 @@ import {
   registerSchema,
   forgotPasswordSchema,
 } from "@/lib/validations/auth";
+import { getSiteUrl } from "@/lib/utils";
+import { z } from "zod";
 
 export type ActionResult = {
   error?: string;
@@ -93,7 +95,7 @@ export async function signUp(
         full_name: parsed.data.fullName,
         role: parsed.data.role,
       },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/callback`,
+      emailRedirectTo: `${await getSiteUrl()}/callback`,
     },
   });
 
@@ -172,7 +174,7 @@ export async function signInWithGoogle(next = "/") {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/callback?next=${encodeURIComponent(next)}`,
+      redirectTo: `${await getSiteUrl()}/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
@@ -200,9 +202,10 @@ export async function forgotPassword(
     };
   }
 
+  const siteUrl = await getSiteUrl();
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/callback?next=/sifre-yenile`,
+    redirectTo: `${siteUrl}/auth/confirm?next=/sifre-yenile`,
   });
 
   if (error) {
@@ -210,6 +213,57 @@ export async function forgotPassword(
   }
 
   return { success: "Şifre sıfırlama linki e-posta adresinize gönderildi." };
+}
+
+const updatePasswordSchema = z
+  .object({
+    password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Şifreler eşleşmiyor",
+    path: ["confirmPassword"],
+  });
+
+export async function updatePassword(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const values = formValues(formData, ["password", "confirmPassword"]);
+
+  const parsed = updatePasswordSchema.safeParse({
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+
+  if (!parsed.success) {
+    return {
+      error: parsed.error.issues[0]?.message ?? "Geçersiz form",
+      values,
+    };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      error: "Oturum bulunamadı. Şifre sıfırlama linkine tekrar tıkla.",
+      values,
+    };
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    return { error: error.message, values };
+  }
+
+  return { success: "Şifren güncellendi. Giriş yapabilirsin." };
 }
 
 export async function getCurrentProfile() {

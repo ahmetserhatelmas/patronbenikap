@@ -34,6 +34,8 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/giris") ||
     path.startsWith("/kayit") ||
     path.startsWith("/sifremi-unuttum");
+  // Recovery session is logged-in; allow staying on reset page
+  const isPasswordResetPage = path.startsWith("/sifre-yenile");
   const isProtected =
     path.startsWith("/isci/panel") ||
     path.startsWith("/isci/profil") ||
@@ -55,13 +57,14 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthPage) {
+  // Allow "şifremi unuttum" while logged in (expired recovery links land here)
+  if (user && isAuthPage && !path.startsWith("/sifremi-unuttum")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
-  if (user) {
+  if (user && !isPasswordResetPage) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
