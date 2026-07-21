@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
-import { Header } from "@/components/layout/header";
 import { ProfessionsManager } from "@/components/admin/professions-manager";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { getCurrentProfile } from "@/lib/actions/auth";
-import { syncProfessionCategories } from "@/lib/actions/admin";
 import type { Profession, ProfessionCategory } from "@/types/database";
 
 export const metadata = { title: "Meslekler — Admin" };
@@ -11,9 +9,6 @@ export const metadata = { title: "Meslekler — Admin" };
 export default async function AdminProfessionsPage() {
   const profile = await getCurrentProfile();
   if (!profile || profile.role !== "admin") redirect("/");
-
-  // Pull any category used by professions into the categories table
-  await syncProfessionCategories();
 
   const admin = createServiceClient();
   const [{ data: professions }, { data: categories }] = await Promise.all([
@@ -31,9 +26,7 @@ export default async function AdminProfessionsPage() {
   ]);
 
   return (
-    <>
-      <Header profile={profile} />
-      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">
           Meslekler
         </h1>
@@ -46,6 +39,5 @@ export default async function AdminProfessionsPage() {
           categories={(categories ?? []) as ProfessionCategory[]}
         />
       </main>
-    </>
   );
 }

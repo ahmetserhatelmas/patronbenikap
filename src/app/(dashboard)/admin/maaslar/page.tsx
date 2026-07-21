@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Header } from "@/components/layout/header";
 import {
   SalaryRangesManager,
   type SalaryRow,
@@ -32,9 +31,7 @@ export default async function AdminSalariesPage() {
   }));
 
   return (
-    <>
-      <Header profile={profile} />
-      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">
           Maaş verileri
         </h1>
@@ -47,6 +44,5 @@ export default async function AdminSalariesPage() {
           professions={professions ?? []}
         />
       </main>
-    </>
   );
 }

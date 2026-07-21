@@ -2,14 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, BadgeCheck } from "lucide-react";
-import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getCurrentProfile } from "@/lib/actions/auth";
+import { ConfirmSubmitButton } from "@/components/admin/confirm-submit-button";
 import {
   approveCompany,
+  deleteCompanyAccount,
   getAdminCompany,
   revokeCompanyVerification,
+  toggleCompanyActive,
 } from "@/lib/actions/admin";
 import { formatNumber, formatTrPhoneDisplay } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -110,9 +112,7 @@ export default async function AdminCompanyDetailPage({
   ];
 
   return (
-    <>
-      <Header profile={profile} />
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <Link
           href="/admin/firmalar"
           className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -183,6 +183,32 @@ export default async function AdminCompanyDetailPage({
                 </Button>
               </form>
             )}
+            {owner && owner.id !== profile.id && (
+              <>
+                <form
+                  action={async () => {
+                    "use server";
+                    await toggleCompanyActive(company.id);
+                  }}
+                >
+                  <Button type="submit" variant="outline" size="sm">
+                    {owner.is_active ? "Pasifleştir" : "Aktifleştir"}
+                  </Button>
+                </form>
+                <form
+                  action={async () => {
+                    "use server";
+                    const result = await deleteCompanyAccount(company.id);
+                    if (!result.error) redirect("/admin/firmalar");
+                  }}
+                >
+                  <ConfirmSubmitButton
+                    label="Hesabı sil"
+                    confirmMessage={`${company.name} hesabını kalıcı silmek istediğine emin misin? Bu işlem geri alınamaz.`}
+                  />
+                </form>
+              </>
+            )}
           </div>
         </div>
 
@@ -214,6 +240,5 @@ export default async function AdminCompanyDetailPage({
           </p>
         </section>
       </main>
-    </>
   );
 }

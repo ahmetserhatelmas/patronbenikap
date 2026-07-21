@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Header } from "@/components/layout/header";
 import { WorkerCard } from "@/components/worker/worker-card";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/actions/auth";
@@ -28,9 +27,7 @@ export default async function FavoritesPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <>
-      <Header profile={profile} />
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">
           Favoriler
         </h1>
@@ -57,6 +54,5 @@ export default async function FavoritesPage() {
           </div>
         )}
       </main>
-    </>
   );
 }

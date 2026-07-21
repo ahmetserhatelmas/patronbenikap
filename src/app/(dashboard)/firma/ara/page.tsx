@@ -1,13 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { SearchFilters } from "@/components/company/search-filters";
 import { WorkerCard } from "@/components/worker/worker-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { searchWorkers } from "@/lib/actions/profiles";
-import { getCurrentProfile } from "@/lib/actions/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { AvailabilityStatus, EducationLevel } from "@/types/database";
 
@@ -22,51 +20,40 @@ export default async function SearchPage({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
-  const profile = await getCurrentProfile();
-
-  let professions: {
-    id: string;
-    name: string;
-    slug: string;
-    category: string | null;
-    icon: string | null;
-    is_trending: boolean;
-    sort_order: number;
-  }[] = [];
-
-  try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("professions")
-      .select("*")
-      .order("sort_order");
-    professions = data ?? [];
-  } catch {
-    professions = [];
-  }
-
   const page = Number(params.page) || 1;
-  const { workers, total } = await searchWorkers({
-    q: params.q,
-    city: params.city,
-    profession: params.profession,
-    experience_min: params.experience_min
-      ? Number(params.experience_min)
-      : undefined,
-    salary_max: params.salary_max ? Number(params.salary_max) : undefined,
-    availability: params.availability as AvailabilityStatus | undefined,
-    education: params.education as EducationLevel | undefined,
-    shift_work: params.shift_work === "1" ? true : undefined,
-    sort: (params.sort as "newest" | "experience" | "salary_asc" | "salary_desc") || "newest",
-    page,
-    limit: 12,
-  }).catch(() => ({ workers: [], total: 0, error: null }));
+
+  const supabase = await createClient();
+  const [professionsResult, searchResult] = await Promise.all([
+    supabase.from("professions").select("*").order("sort_order"),
+    searchWorkers({
+      q: params.q,
+      city: params.city,
+      profession: params.profession,
+      experience_min: params.experience_min
+        ? Number(params.experience_min)
+        : undefined,
+      salary_max: params.salary_max ? Number(params.salary_max) : undefined,
+      availability: params.availability as AvailabilityStatus | undefined,
+      education: params.education as EducationLevel | undefined,
+      shift_work: params.shift_work === "1" ? true : undefined,
+      sort:
+        (params.sort as
+          | "newest"
+          | "experience"
+          | "salary_asc"
+          | "salary_desc") || "newest",
+      page,
+      limit: 12,
+    }).catch(() => ({ workers: [], total: 0, error: null })),
+  ]);
+
+  const professions = professionsResult.data ?? [];
+  const { workers, total } = searchResult;
 
   const totalPages = Math.max(1, Math.ceil(total / 12));
 
   return (
     <>
-      <Header profile={profile} />
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="mb-8">
           <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">

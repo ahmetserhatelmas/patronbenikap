@@ -109,10 +109,14 @@ export async function revokeCompanyVerification(
 }
 
 export async function toggleUserActive(userId: string): Promise<ActionResult> {
-  const { supabase, error } = await requireAdmin();
+  const { error, user } = await requireAdmin();
   if (error) return { error };
+  if (user!.id === userId) {
+    return { error: "Kendi hesabını pasifleştiremezsin" };
+  }
 
-  const { data: profile } = await supabase
+  const admin = createServiceClient();
+  const { data: profile } = await admin
     .from("profiles")
     .select("is_active")
     .eq("id", userId)
@@ -120,13 +124,96 @@ export async function toggleUserActive(userId: string): Promise<ActionResult> {
 
   if (!profile) return { error: "Kullanıcı bulunamadı" };
 
-  await supabase
+  const { error: updateError } = await admin
     .from("profiles")
     .update({ is_active: !profile.is_active })
     .eq("id", userId);
 
+  if (updateError) return { error: updateError.message };
+
   revalidatePath("/admin/kullanicilar");
-  return { success: "Kullanıcı güncellendi" };
+  revalidatePath("/admin/firmalar");
+  return {
+    success: profile.is_active
+      ? "Hesap pasifleştirildi"
+      : "Hesap tekrar aktif",
+  };
+}
+
+/** Firma sahibinin profilini pasif/aktif yap (kullanıcılar ile aynı) */
+export async function toggleCompanyActive(
+  companyId: string
+): Promise<ActionResult> {
+  const { error, user } = await requireAdmin();
+  if (error) return { error };
+
+  const admin = createServiceClient();
+  const { data: company } = await admin
+    .from("companies")
+    .select("id, profile_id")
+    .eq("id", companyId)
+    .maybeSingle();
+
+  if (!company) return { error: "Firma bulunamadı" };
+  if (company.profile_id === user!.id) {
+    return { error: "Kendi hesabını pasifleştiremezsin" };
+  }
+
+  const result = await toggleUserActive(company.profile_id);
+  revalidatePath(`/admin/firmalar/${companyId}`);
+  return result;
+}
+
+/** Auth + profil + ilişkili kayıtları kalıcı sil */
+export async function deleteUserAccount(
+  userId: string
+): Promise<ActionResult> {
+  const { error, user } = await requireAdmin();
+  if (error) return { error };
+  if (user!.id === userId) {
+    return { error: "Kendi hesabını silemezsin" };
+  }
+
+  const admin = createServiceClient();
+  const { data: target } = await admin
+    .from("profiles")
+    .select("id, role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (!target) return { error: "Kullanıcı bulunamadı" };
+  if (target.role === "admin") {
+    return { error: "Admin hesabı silinemez" };
+  }
+
+  const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
+  if (deleteError) return { error: deleteError.message };
+
+  revalidatePath("/admin/kullanicilar");
+  revalidatePath("/admin/firmalar");
+  revalidatePath("/admin/ilanlar");
+  return { success: "Hesap silindi" };
+}
+
+export async function deleteCompanyAccount(
+  companyId: string
+): Promise<ActionResult> {
+  const { error, user } = await requireAdmin();
+  if (error) return { error };
+
+  const admin = createServiceClient();
+  const { data: company } = await admin
+    .from("companies")
+    .select("id, profile_id")
+    .eq("id", companyId)
+    .maybeSingle();
+
+  if (!company) return { error: "Firma bulunamadı" };
+  if (company.profile_id === user!.id) {
+    return { error: "Kendi hesabını silemezsin" };
+  }
+
+  return deleteUserAccount(company.profile_id);
 }
 
 export async function upsertProfession(formData: FormData): Promise<ActionResult> {

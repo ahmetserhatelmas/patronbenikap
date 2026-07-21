@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Header } from "@/components/layout/header";
 import { ChatPanel } from "@/components/messaging/chat-panel";
 import { ConversationList } from "@/components/messaging/conversation-list";
 import { NewMessageForm } from "@/components/messaging/new-message-form";
@@ -40,32 +39,25 @@ export default async function CompanyMessagesPage({
     }
   }
 
-  const { data: conversations } = await supabase
-    .from("conversations")
-    .select(
-      `*, worker:workers(id, first_name, last_name, slug, profile:profiles(avatar_url))`
-    )
-    .eq("company_id", company.id)
-    .order("last_message_at", { ascending: false, nullsFirst: false });
+  const [{ data: conversations }, messagesResult] = await Promise.all([
+    supabase
+      .from("conversations")
+      .select(
+        `*, worker:workers(id, first_name, last_name, slug, profile:profiles(avatar_url))`
+      )
+      .eq("company_id", company.id)
+      .order("last_message_at", { ascending: false, nullsFirst: false }),
+    activeId
+      ? supabase
+          .from("messages")
+          .select("*")
+          .eq("conversation_id", activeId)
+          .order("created_at", { ascending: true })
+      : Promise.resolve({ data: null }),
+  ]);
 
   const active = conversations?.find((conv) => conv.id === activeId);
-
-  let messages: {
-    id: string;
-    conversation_id: string;
-    sender_id: string;
-    content: string;
-    is_read: boolean;
-    created_at: string;
-  }[] = [];
-  if (active) {
-    const { data } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", active.id)
-      .order("created_at", { ascending: true });
-    messages = data ?? [];
-  }
+  const messages = active ? (messagesResult.data ?? []) : [];
 
   const worker = active?.worker as unknown as {
     id: string;
@@ -74,9 +66,7 @@ export default async function CompanyMessagesPage({
   } | null;
 
   return (
-    <>
-      <Header profile={profile} />
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <h1 className="mb-6 font-[family-name:var(--font-display)] text-2xl font-bold">
           Mesajlar
         </h1>
@@ -125,6 +115,5 @@ export default async function CompanyMessagesPage({
           </div>
         </div>
       </main>
-    </>
   );
 }

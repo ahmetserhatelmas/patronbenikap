@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Search, Heart, MessageSquare, BadgeCheck } from "lucide-react";
-import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { WorkerCard } from "@/components/worker/worker-card";
 import { createClient } from "@/lib/supabase/server";
@@ -25,24 +24,23 @@ export default async function CompanyDashboard() {
 
   if (!company) redirect("/firma/profil");
 
-  const { data: recent } = await supabase
-    .from("recently_viewed")
-    .select(
-      `worker:workers(*, profession:professions(*), skills:worker_skills(id, level, skill:skills(*)), profile:profiles(avatar_url))`
-    )
-    .eq("company_id", company.id)
-    .order("viewed_at", { ascending: false })
-    .limit(4);
-
-  const { count: favCount } = await supabase
-    .from("favorites")
-    .select("*", { count: "exact", head: true })
-    .eq("company_id", company.id);
+  const [{ data: recent }, { count: favCount }] = await Promise.all([
+    supabase
+      .from("recently_viewed")
+      .select(
+        `worker:workers(*, profession:professions(*), skills:worker_skills(id, level, skill:skills(*)), profile:profiles(avatar_url))`
+      )
+      .eq("company_id", company.id)
+      .order("viewed_at", { ascending: false })
+      .limit(4),
+    supabase
+      .from("favorites")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", company.id),
+  ]);
 
   return (
-    <>
-      <Header profile={profile} />
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="flex items-center gap-2 font-[family-name:var(--font-display)] text-3xl font-bold">
@@ -110,7 +108,6 @@ export default async function CompanyDashboard() {
           </section>
         )}
       </main>
-    </>
   );
 }
 

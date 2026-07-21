@@ -118,7 +118,18 @@ export default async function WorkerPublicPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Header profile={profile} />
+      <Header
+        profile={profile}
+        profileHref={
+          profile?.role === "worker" && worker.profile_id === profile.id
+            ? `/isci/${worker.slug}`
+            : profile?.role === "company"
+              ? "/firma/profil"
+              : profile?.role === "admin"
+                ? "/admin"
+                : undefined
+        }
+      />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <PublicProfileView
           worker={workerWithViews}

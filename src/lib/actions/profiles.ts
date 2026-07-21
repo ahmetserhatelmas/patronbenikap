@@ -12,6 +12,7 @@ import {
   slugify,
 } from "@/lib/utils";
 import type { ActionResult } from "@/lib/actions/auth";
+import { setWorkerSlugCookie } from "@/lib/auth-cookies";
 import type { WorkerSearchParams } from "@/types/database";
 
 function str(formData: FormData, key: string) {
@@ -173,6 +174,8 @@ export async function upsertWorkerProfile(
       phone: data.phone,
     })
     .eq("id", user.id);
+
+  await setWorkerSlugCookie(existing?.slug ?? slug);
 
   revalidatePath("/isci/profil");
   revalidatePath("/isci/panel");

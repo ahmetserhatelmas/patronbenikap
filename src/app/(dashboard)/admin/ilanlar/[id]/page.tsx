@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getCurrentProfile } from "@/lib/actions/auth";
@@ -155,9 +154,7 @@ export default async function AdminListingDetailPage({
   ];
 
   return (
-    <>
-      <Header profile={profile} />
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <Link
           href="/admin/ilanlar"
           className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -324,6 +321,5 @@ export default async function AdminListingDetailPage({
           )}
         </section>
       </main>
-    </>
   );
 }

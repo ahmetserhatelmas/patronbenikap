@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Header } from "@/components/layout/header";
 import { WorkerProfileForm } from "@/components/worker/profile-form";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/actions/auth";
@@ -24,9 +23,7 @@ export default async function WorkerProfilePage() {
     ]);
 
   return (
-    <>
-      <Header profile={profile} />
-      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">
           {worker ? "Profilini düzenle" : "Profilini oluştur"}
         </h1>
@@ -42,6 +39,5 @@ export default async function WorkerProfilePage() {
           />
         </div>
       </main>
-    </>
   );
 }

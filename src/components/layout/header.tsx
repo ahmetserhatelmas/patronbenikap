@@ -15,12 +15,15 @@ import { useUnreadMessages } from "@/hooks/use-unread-messages";
 
 interface HeaderProps {
   profile?: Profile | null;
+  /** Direct profile URL — skip /profil redirect hop */
+  profileHref?: string;
   unreadNotifications?: number;
   unreadMessages?: number;
 }
 
 export function Header({
   profile,
+  profileHref: profileHrefProp,
   unreadNotifications = 0,
   unreadMessages = 0,
 }: HeaderProps) {
@@ -43,6 +46,22 @@ export function Header({
       : profile?.role === "admin"
         ? "/admin"
         : "/isci/panel";
+
+  const profileHref =
+    profileHrefProp ??
+    (profile?.role === "company"
+      ? "/firma/profil"
+      : profile?.role === "admin"
+        ? "/admin"
+        : profile?.role === "worker"
+          ? "/isci/profil"
+          : "/profil");
+
+  const profileActive =
+    pathname === profileHref ||
+    pathname === "/profil" ||
+    pathname.startsWith("/isci/profil") ||
+    pathname.startsWith("/firma/profil");
 
   const messagesHref =
     profile?.role === "company" ? "/firma/mesajlar" : "/isci/mesajlar";
@@ -86,14 +105,7 @@ export function Header({
               <NavLink href={panelHref} active={pathname.includes("/panel")}>
                 Panel
               </NavLink>
-              <NavLink
-                href="/profil"
-                active={
-                  pathname === "/profil" ||
-                  pathname.startsWith("/isci/profil") ||
-                  pathname.startsWith("/firma/profil")
-                }
-              >
+              <NavLink href={profileHref} active={profileActive}>
                 Profil
               </NavLink>
               <Link
@@ -209,7 +221,7 @@ export function Header({
                   Panel
                 </Link>
                 <Link
-                  href="/profil"
+                  href={profileHref}
                   className="rounded-lg px-3 py-2 text-sm hover:bg-muted"
                   onClick={() => setOpen(false)}
                 >

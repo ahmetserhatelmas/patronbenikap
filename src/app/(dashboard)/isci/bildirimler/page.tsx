@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { Bell, CheckCheck } from "lucide-react";
-import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/actions/auth";
@@ -26,9 +25,7 @@ export default async function NotificationsPage() {
     .limit(50);
 
   return (
-    <>
-      <Header profile={profile} />
-      <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
         <div className="flex items-center justify-between">
           <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">
             Bildirimler
@@ -91,6 +88,5 @@ export default async function NotificationsPage() {
           </ul>
         )}
       </main>
-    </>
   );
 }

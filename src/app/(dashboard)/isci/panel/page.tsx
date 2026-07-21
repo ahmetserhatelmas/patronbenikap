@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Eye, Heart, MessageSquare, Percent } from "lucide-react";
-import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/actions/auth";
@@ -26,26 +25,21 @@ export default async function WorkerDashboard() {
     redirect("/isci/profil");
   }
 
-  const { count: unreadMessages } = await supabase
-    .from("messages")
-    .select("*, conversation:conversations!inner(worker_id)", {
-      count: "exact",
-      head: true,
-    })
-    .eq("is_read", false)
-    .neq("sender_id", profile.id);
-
-  const { count: unreadNotifs } = await supabase
-    .from("notifications")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", profile.id)
-    .eq("type", "view")
-    .eq("is_read", false);
-
-  const { count: uniqueCompanyViews } = await supabase
-    .from("recently_viewed")
-    .select("*", { count: "exact", head: true })
-    .eq("worker_id", worker.id);
+  const [{ count: unreadMessages }, { count: uniqueCompanyViews }] =
+    await Promise.all([
+      supabase
+        .from("messages")
+        .select("*, conversation:conversations!inner(worker_id)", {
+          count: "exact",
+          head: true,
+        })
+        .eq("is_read", false)
+        .neq("sender_id", profile.id),
+      supabase
+        .from("recently_viewed")
+        .select("*", { count: "exact", head: true })
+        .eq("worker_id", worker.id),
+    ]);
 
   const cards = [
     {
@@ -80,13 +74,7 @@ export default async function WorkerDashboard() {
   ];
 
   return (
-    <>
-      <Header
-        profile={profile}
-        unreadNotifications={unreadNotifs ?? 0}
-        unreadMessages={unreadMessages ?? 0}
-      />
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">
@@ -150,7 +138,6 @@ export default async function WorkerDashboard() {
           <QuickLink href={`/isci/${worker.slug}`} title="Paylaş" desc="Profil linkini kopyala" />
         </div>
       </main>
-    </>
   );
 }
 

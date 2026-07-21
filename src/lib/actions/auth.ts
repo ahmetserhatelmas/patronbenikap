@@ -1,5 +1,6 @@
 "use server";
 
+import { cache } from "react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -8,8 +9,14 @@ import {
   registerSchema,
   forgotPasswordSchema,
 } from "@/lib/validations/auth";
+import {
+  clearAuthNavCookies,
+  setRoleCookie,
+  setWorkerSlugCookie,
+} from "@/lib/auth-cookies";
 import { getSiteUrl } from "@/lib/utils";
 import { z } from "zod";
+import type { Profile } from "@/types/database";
 
 export type ActionResult = {
   error?: string;
@@ -51,6 +58,40 @@ export async function signIn(
 
   if (error) {
     return { error: "E-posta veya şifre hatalı", values };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_active")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile && profile.is_active === false) {
+      await supabase.auth.signOut();
+      await clearAuthNavCookies();
+      return {
+        error: "Hesabın pasifleştirilmiş. Destek ile iletişime geç.",
+        values,
+      };
+    }
+
+    if (profile?.role) {
+      await setRoleCookie(profile.role);
+      if (profile.role === "worker") {
+        const { data: worker } = await supabase
+          .from("workers")
+          .select("slug")
+          .eq("profile_id", user.id)
+          .maybeSingle();
+        await setWorkerSlugCookie(worker?.slug);
+      } else {
+        await setWorkerSlugCookie(null);
+      }
+    }
   }
 
   const next = (formData.get("next") as string) || "/";
@@ -166,6 +207,7 @@ export async function signUp(
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  await clearAuthNavCookies();
   redirect("/");
 }
 
@@ -266,7 +308,8 @@ export async function updatePassword(
   return { success: "Şifren güncellendi. Giriş yapabilirsin." };
 }
 
-export async function getCurrentProfile() {
+/** Deduped per RSC request — layout + page share one auth/profile fetch */
+export const getCurrentProfile = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -280,8 +323,26 @@ export async function getCurrentProfile() {
     .eq("id", user.id)
     .single();
 
+  if (profile && profile.is_active === false) return null;
+
   return profile;
-}
+});
+
+/** Direct nav target for "Profil" — avoids /profil → /isci/slug hop */
+export const getProfileNavHref = cache(async (profile: Profile) => {
+  if (profile.role === "company") return "/firma/profil";
+  if (profile.role === "admin") return "/admin";
+
+  const supabase = await createClient();
+  const { data: worker } = await supabase
+    .from("workers")
+    .select("slug")
+    .eq("profile_id", profile.id)
+    .maybeSingle();
+
+  if (worker?.slug) return `/isci/${worker.slug}`;
+  return "/isci/profil";
+});
 
 export async function revalidateDashboard() {
   revalidatePath("/", "layout");
