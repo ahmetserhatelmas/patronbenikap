@@ -44,6 +44,7 @@ export default async function AdminCompanyDetailPage({
   const rows: { label: string; value: ReactNode }[] = [
     { label: "Firma adı", value: company.name },
     { label: "Slug", value: company.slug },
+    { label: "MERSİS no", value: company.mersis_no || "—" },
     { label: "Sektör", value: company.sector || "—" },
     { label: "Şehir", value: company.city || "—" },
     {

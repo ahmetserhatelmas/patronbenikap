@@ -17,6 +17,8 @@ interface HeaderProps {
   profile?: Profile | null;
   /** Direct profile URL — skip /profil redirect hop */
   profileHref?: string;
+  /** Company must be admin-verified to search workers */
+  canSearchWorkers?: boolean;
   unreadNotifications?: number;
   unreadMessages?: number;
 }
@@ -24,6 +26,7 @@ interface HeaderProps {
 export function Header({
   profile,
   profileHref: profileHrefProp,
+  canSearchWorkers = true,
   unreadNotifications = 0,
   unreadMessages = 0,
 }: HeaderProps) {
@@ -66,10 +69,19 @@ export function Header({
   const messagesHref =
     profile?.role === "company" ? "/firma/mesajlar" : "/isci/mesajlar";
 
-  const showWorkerSearch = !profile || profile.role === "company";
+  const showWorkerSearch =
+    !profile || profile.role === "company" || profile.role === "admin";
 
   const workerSearchHref =
-    profile?.role === "company" ? "/firma/ara" : "/kayit?role=company";
+    profile?.role === "company"
+      ? canSearchWorkers
+        ? "/firma/ara"
+        : "/firma/panel"
+      : profile?.role === "admin"
+        ? "/firma/ara"
+        : "/kayit?role=company";
+
+  const searchLocked = profile?.role === "company" && !canSearchWorkers;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 glass">
@@ -92,14 +104,22 @@ export function Header({
               </NavLink>
             </>
           )}
-          {showWorkerSearch && (
-            <NavLink
-              href={workerSearchHref}
-              active={pathname.startsWith("/firma/ara")}
-            >
-              İşçi Ara
-            </NavLink>
-          )}
+          {showWorkerSearch &&
+            (searchLocked ? (
+              <span
+                className="cursor-not-allowed rounded-lg px-3 py-2 text-sm text-muted-foreground/50"
+                title="Admin onayından sonra aktif olur"
+              >
+                İşçi Ara
+              </span>
+            ) : (
+              <NavLink
+                href={workerSearchHref}
+                active={pathname.startsWith("/firma/ara")}
+              >
+                İşçi Ara
+              </NavLink>
+            ))}
           {profile ? (
             <>
               <NavLink href={panelHref} active={pathname.includes("/panel")}>
@@ -202,15 +222,20 @@ export function Header({
                 </Link>
               </>
             )}
-            {showWorkerSearch && (
-              <Link
-                href={workerSearchHref}
-                className="rounded-lg px-3 py-2 text-sm hover:bg-muted"
-                onClick={() => setOpen(false)}
-              >
-                İşçi Ara
-              </Link>
-            )}
+            {showWorkerSearch &&
+              (searchLocked ? (
+                <span className="rounded-lg px-3 py-2 text-sm text-muted-foreground/50">
+                  İşçi Ara (onay bekleniyor)
+                </span>
+              ) : (
+                <Link
+                  href={workerSearchHref}
+                  className="rounded-lg px-3 py-2 text-sm hover:bg-muted"
+                  onClick={() => setOpen(false)}
+                >
+                  İşçi Ara
+                </Link>
+              ))}
             {profile ? (
               <>
                 <Link

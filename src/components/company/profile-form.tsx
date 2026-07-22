@@ -54,6 +54,23 @@ export function CompanyProfileForm({ company }: { company?: Company | null }) {
               defaultValue={company?.name ?? ""}
             />
           </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="mersis_no">MERSİS no</Label>
+            <Input
+              id="mersis_no"
+              name="mersis_no"
+              required
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="16 haneli MERSİS numarası"
+              maxLength={19}
+              defaultValue={company?.mersis_no ?? ""}
+            />
+            <p className="text-xs text-muted-foreground">
+              Onay için zorunlu. Admin panelinden doğrulanana kadar İşçi Ara
+              kapalı kalır.
+            </p>
+          </div>
           <div className="space-y-2">
             <Label>Sektör</Label>
             <Select value={sector} onValueChange={setSector}>
@@ -128,9 +145,15 @@ export function CompanyProfileForm({ company }: { company?: Company | null }) {
             />
           </div>
         </div>
-        {company?.is_verified && (
-          <p className="text-sm text-primary font-medium">✓ Doğrulanmış firma</p>
-        )}
+        {company?.is_verified ? (
+          <p className="text-sm font-medium text-primary">
+            ✓ Doğrulanmış firma — İşçi Ara aktif
+          </p>
+        ) : company ? (
+          <p className="text-sm text-muted-foreground">
+            Profil kaydedildi. Admin onayından sonra İşçi Ara açılacak.
+          </p>
+        ) : null}
       </section>
 
       <Button type="submit" size="lg" className="h-12" disabled={pending}>

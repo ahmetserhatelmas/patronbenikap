@@ -39,6 +39,8 @@ export default async function CompanyDashboard() {
       .eq("company_id", company.id),
   ]);
 
+  const searchOpen = company.is_verified;
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -58,21 +60,35 @@ export default async function CompanyDashboard() {
             <Button variant="outline" asChild>
               <Link href="/firma/profil">Firma ayarları</Link>
             </Button>
-            <Button asChild>
-              <Link href="/firma/ara">
+            {searchOpen ? (
+              <Button asChild>
+                <Link href="/firma/ara">
+                  <Search className="mr-1.5 h-4 w-4" />
+                  İşçi Ara
+                </Link>
+              </Button>
+            ) : (
+              <Button disabled title="Admin onayından sonra aktif olur">
                 <Search className="mr-1.5 h-4 w-4" />
                 İşçi Ara
-              </Link>
-            </Button>
+              </Button>
+            )}
           </div>
         </div>
 
+        {!searchOpen && (
+          <div className="mt-6 rounded-2xl border border-brand-orange/30 bg-brand-orange/5 px-4 py-3 text-sm">
+            Firma hesabın onay bekliyor. MERSİS no kaydın tamamsa admin
+            onayından sonra <strong>İşçi Ara</strong> açılacak.
+          </div>
+        )}
+
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <StatCard
-            href="/firma/ara"
+            href={searchOpen ? "/firma/ara" : "/firma/panel"}
             icon={Search}
             label="İşçi ara"
-            value="Keşfet"
+            value={searchOpen ? "Keşfet" : "Onay bekleniyor"}
             color="primary"
           />
           <StatCard

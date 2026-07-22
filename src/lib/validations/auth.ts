@@ -101,6 +101,16 @@ export const workerProfileSchema = z.object({
 
 export const companyProfileSchema = z.object({
   name: z.string().min(2, "Firma adı gerekli"),
+  mersis_no: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/\D/g, ""))
+    .pipe(
+      z
+        .string()
+        .length(16, "MERSİS no 16 haneli olmalı")
+        .regex(/^\d{16}$/, "MERSİS no sadece rakam olmalı")
+    ),
   sector: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   description: z.string().max(2000).optional().nullable(),

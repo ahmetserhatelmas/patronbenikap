@@ -5,7 +5,10 @@ import { SearchFilters } from "@/components/company/search-filters";
 import { WorkerCard } from "@/components/worker/worker-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { searchWorkers } from "@/lib/actions/profiles";
+import {
+  canCompanySearchWorkers,
+  searchWorkers,
+} from "@/lib/actions/profiles";
 import { createClient } from "@/lib/supabase/server";
 import type { AvailabilityStatus, EducationLevel } from "@/types/database";
 
@@ -19,6 +22,31 @@ export default async function SearchPage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
+  const allowed = await canCompanySearchWorkers();
+  if (!allowed) {
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+        <div className="rounded-2xl border border-border/60 bg-card p-8 text-center shadow-sm">
+          <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">
+            İşçi Ara henüz aktif değil
+          </h1>
+          <p className="mt-3 text-muted-foreground">
+            Firma hesabın admin onayından sonra İşçi Ara açılır. Profilinde
+            MERSİS no kayıtlı olduğundan emin ol; onay sürecini bekleyebilirsin.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <Button asChild>
+              <Link href="/firma/panel">Panele dön</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/firma/profil">Profili kontrol et</Link>
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const params = await searchParams;
   const page = Number(params.page) || 1;
 

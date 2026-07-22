@@ -141,6 +141,7 @@ export interface Company {
   website: string | null;
   logo_url: string | null;
   is_verified: boolean;
+  mersis_no: string | null;
   employee_count: string | null;
   phone: string | null;
   created_at: string;

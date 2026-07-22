@@ -1,11 +1,30 @@
 import { Suspense } from "react";
 import { Header } from "@/components/layout/header";
 import { getCurrentProfile, getProfileNavHref } from "@/lib/actions/auth";
+import { createClient } from "@/lib/supabase/server";
 
 async function DashboardHeader() {
   const profile = await getCurrentProfile();
   const profileHref = profile ? await getProfileNavHref(profile) : undefined;
-  return <Header profile={profile} profileHref={profileHref} />;
+
+  let canSearchWorkers = true;
+  if (profile?.role === "company") {
+    const supabase = await createClient();
+    const { data: company } = await supabase
+      .from("companies")
+      .select("is_verified")
+      .eq("profile_id", profile.id)
+      .maybeSingle();
+    canSearchWorkers = !!company?.is_verified;
+  }
+
+  return (
+    <Header
+      profile={profile}
+      profileHref={profileHref}
+      canSearchWorkers={canSearchWorkers}
+    />
+  );
 }
 
 function HeaderFallback() {

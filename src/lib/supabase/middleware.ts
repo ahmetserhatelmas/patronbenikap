@@ -182,6 +182,20 @@ export async function updateSession(request: NextRequest) {
       url.pathname = "/firma/panel";
       return NextResponse.redirect(url);
     }
+
+    // Unverified companies cannot use İşçi Ara
+    if (role === "company" && path.startsWith("/firma/ara")) {
+      const { data: company } = await supabase
+        .from("companies")
+        .select("is_verified")
+        .eq("profile_id", user.id)
+        .maybeSingle();
+      if (!company?.is_verified) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/firma/panel";
+        return NextResponse.redirect(url);
+      }
+    }
   }
 
   // Clear stale nav cookies on logout

@@ -188,6 +188,7 @@ export async function upsertCompanyProfile(
 ): Promise<ActionResult> {
   const parsed = companyProfileSchema.safeParse({
     name: formData.get("name"),
+    mersis_no: formData.get("mersis_no"),
     sector: formData.get("sector") || null,
     city: formData.get("city") || null,
     description: formData.get("description") || null,
@@ -220,14 +221,24 @@ export async function upsertCompanyProfile(
       .from("companies")
       .update(parsed.data)
       .eq("id", existing.id);
-    if (error) return { error: error.message };
+    if (error) {
+      if (error.code === "23505" && error.message.includes("mersis")) {
+        return { error: "Bu MERSİS no başka bir firmada kayıtlı" };
+      }
+      return { error: error.message };
+    }
   } else {
     const { error } = await supabase.from("companies").insert({
       ...parsed.data,
       profile_id: user.id,
       slug,
     });
-    if (error) return { error: error.message };
+    if (error) {
+      if (error.code === "23505" && error.message.includes("mersis")) {
+        return { error: "Bu MERSİS no başka bir firmada kayıtlı" };
+      }
+      return { error: error.message };
+    }
   }
 
   await supabase
@@ -241,11 +252,66 @@ export async function upsertCompanyProfile(
 
   revalidatePath("/firma/profil");
   revalidatePath("/firma/panel");
-  return { success: "Firma profili kaydedildi" };
+  return {
+    success:
+      "Firma profili kaydedildi. Admin onayından sonra İşçi Ara açılacak.",
+  };
+}
+
+/** Company can search workers only after admin verification */
+export async function canCompanySearchWorkers() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.role === "admin") return true;
+  if (profile?.role !== "company") return false;
+
+  const { data: company } = await supabase
+    .from("companies")
+    .select("is_verified")
+    .eq("profile_id", user.id)
+    .maybeSingle();
+
+  return !!company?.is_verified;
 }
 
 export async function searchWorkers(params: WorkerSearchParams) {
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profile?.role === "company") {
+      const { data: company } = await supabase
+        .from("companies")
+        .select("is_verified")
+        .eq("profile_id", user.id)
+        .maybeSingle();
+      if (!company?.is_verified) {
+        return {
+          workers: [],
+          total: 0,
+          error: "Firma hesabın henüz onaylanmadı",
+        };
+      }
+    }
+  }
+
   const page = params.page ?? 1;
   const limit = params.limit ?? 12;
   const from = (page - 1) * limit;

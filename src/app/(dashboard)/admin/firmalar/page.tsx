@@ -23,7 +23,8 @@ export default async function AdminCompaniesPage() {
   const { data: companies } = await admin
     .from("companies")
     .select("*, profile:profiles(id, email, is_active)")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(200);
 
   const pending = companies?.filter((c) => !c.is_verified).length ?? 0;
 
@@ -73,6 +74,11 @@ export default async function AdminCompaniesPage() {
                   {owner?.email && (
                     <p className="text-xs text-muted-foreground">
                       {owner.email}
+                    </p>
+                  )}
+                  {c.mersis_no && (
+                    <p className="text-xs text-muted-foreground">
+                      MERSİS: {c.mersis_no}
                     </p>
                   )}
                   <div className="mt-2 flex flex-wrap gap-2">
