@@ -1,6 +1,7 @@
 /**
- * Hestia NodeApps entry — matches host "FTP src + Restart" workflow.
- * On Restart: if `src` is newer than `.next`, runs `next build` then `next start`.
+ * Hestia NodeApps entry — keep process alive.
+ * Do NOT run `next build` here (shared hosting OOM / restart loop).
+ * Hosting flow: upload src → ask them for `npm run build` once → Restart.
  */
 const http = require("http");
 const { spawn } = require("child_process");
@@ -46,60 +47,7 @@ const nextBin = path.join(
   "bin",
   "next"
 );
-const nextDir = path.join(__dirname, ".next");
-const srcDir = path.join(__dirname, "src");
-
-function newestMtime(dir, maxDepth = 6) {
-  let newest = 0;
-  if (!fs.existsSync(dir)) return 0;
-
-  function walk(current, depth) {
-    if (depth > maxDepth) return;
-    let entries;
-    try {
-      entries = fs.readdirSync(current, { withFileTypes: true });
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      if (entry.name === "node_modules" || entry.name === ".next") continue;
-      const full = path.join(current, entry.name);
-      try {
-        if (entry.isDirectory()) {
-          walk(full, depth + 1);
-        } else {
-          const t = fs.statSync(full).mtimeMs;
-          if (t > newest) newest = t;
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-
-  walk(dir, 0);
-  return newest;
-}
-
-function needsBuild() {
-  if (process.env.FORCE_REBUILD === "1") return true;
-  if (!fs.existsSync(nextDir)) return true;
-  const buildId = path.join(nextDir, "BUILD_ID");
-  const builtAt = fs.existsSync(buildId)
-    ? fs.statSync(buildId).mtimeMs
-    : fs.statSync(nextDir).mtimeMs;
-  const sourceAt = Math.max(
-    newestMtime(srcDir),
-    newestMtime(path.join(__dirname, "public")),
-    fs.existsSync(path.join(__dirname, "next.config.ts"))
-      ? fs.statSync(path.join(__dirname, "next.config.ts")).mtimeMs
-      : 0,
-    fs.existsSync(path.join(__dirname, "package.json"))
-      ? fs.statSync(path.join(__dirname, "package.json")).mtimeMs
-      : 0
-  );
-  return sourceAt > builtAt + 1000;
-}
+const nextBuild = path.join(__dirname, ".next", "BUILD_ID");
 
 function startNext() {
   console.log(`Starting Next on port ${port}`);
@@ -114,64 +62,31 @@ function startNext() {
   });
 }
 
-function runBuild(done) {
-  console.log("Building Next.js (FTP update detected)...");
-  const child = spawn(process.execPath, [nextBin, "build"], {
-    cwd: __dirname,
-    stdio: "inherit",
-    env: { ...process.env, NODE_ENV: "production" },
-  });
-  child.on("exit", (code) => done(code === 0));
-}
-
-function withBuildingPage(thenStart) {
-  const server = http.createServer((_req, res) => {
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(`<!doctype html>
-<html lang="tr">
-<head><meta charset="utf-8"><meta http-equiv="refresh" content="15"><title>Güncelleniyor</title></head>
-<body style="font-family:system-ui;max-width:520px;margin:48px auto;padding:0 16px;line-height:1.5">
-  <h1>Site güncelleniyor</h1>
-  <p>Yeni kod derleniyor (1–3 dakika). Sayfa otomatik yenilenecek.</p>
-</body>
-</html>`);
-  });
-
-  server.listen(port, () => {
-    console.log(`Building page on port ${port}`);
-    runBuild((ok) => {
-      server.close(() => {
-        if (!ok) {
-          console.error("next build failed");
-          process.exit(1);
-        }
-        thenStart();
-      });
-    });
-  });
-}
-
-function startPlaceholder(message) {
+function startPlaceholder() {
   const server = http.createServer((_req, res) => {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(`<!doctype html>
 <html lang="tr">
 <head><meta charset="utf-8"><title>Patron Beni Kap</title></head>
 <body style="font-family:system-ui;max-width:560px;margin:48px auto;padding:0 16px;line-height:1.5">
-  <h1>Kurulum eksik</h1>
-  <p>${message}</p>
+  <h1>Site kısa süre kapalı</h1>
+  <p>Uygulama ayakta ama güncel derleme yok veya başlatılamadı.</p>
+  <p>Hosting desteğine şunu iletin:</p>
+  <pre style="background:#f4f4f4;padding:12px;border-radius:8px;overflow:auto">cd ~/web/patronbenikap.com/nodeapp
+npm install
+npm run build
+# sonra panelden NodeApps → Restart</pre>
 </body>
 </html>`);
   });
-  server.listen(port, () => console.log(`Placeholder on ${port}`));
+  server.listen(port, () => {
+    console.log(`Placeholder listening on port ${port}`);
+  });
 }
 
-if (!fs.existsSync(nextBin)) {
-  startPlaceholder(
-    "node_modules eksik. Hosting’den <code>npm install</code> isteyin."
-  );
-} else if (needsBuild()) {
-  withBuildingPage(startNext);
-} else {
+if (fs.existsSync(nextBin) && fs.existsSync(nextBuild)) {
   startNext();
+} else {
+  console.log("Next build missing — placeholder mode");
+  startPlaceholder();
 }
