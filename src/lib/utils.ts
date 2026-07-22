@@ -122,10 +122,22 @@ function isLocalHost(value: string) {
   return /localhost|127\.0\.0\.1/.test(value);
 }
 
+/** Hestia/NodeApps internal ports must never appear in auth emails */
+function isInternalHost(value: string) {
+  if (isLocalHost(value)) return true;
+  // bare high ports behind reverse proxy (e.g. localhost:50000)
+  if (/:\d{4,5}$/.test(value) && !/\./.test(value.split(":")[0] ?? "")) {
+    return true;
+  }
+  if (/:(50000|50001|3000|3001)(\b|$)/.test(value) && isLocalHost(value)) {
+    return true;
+  }
+  return false;
+}
+
 /**
  * Public site origin for auth redirects / emails.
- * Prefer NEXT_PUBLIC_APP_URL; on Vercel use request host / production URL
- * so password-reset links never point at localhost.
+ * Prefer NEXT_PUBLIC_APP_URL; never use internal NodeApps hosts.
  */
 export async function getSiteUrl(): Promise<string> {
   const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
@@ -136,9 +148,11 @@ export async function getSiteUrl(): Promise<string> {
   try {
     const { headers } = await import("next/headers");
     const h = await headers();
-    const host = h.get("x-forwarded-host") ?? h.get("host");
+    const host = (h.get("x-forwarded-host") ?? h.get("host") ?? "")
+      .split(",")[0]
+      ?.trim();
     const proto = (h.get("x-forwarded-proto") ?? "https").split(",")[0]?.trim();
-    if (host && !isLocalHost(host)) {
+    if (host && !isInternalHost(host)) {
       return `${proto || "https"}://${host}`;
     }
   } catch {
@@ -158,6 +172,11 @@ export async function getSiteUrl(): Promise<string> {
   const vercel = process.env.VERCEL_URL?.replace(/\/$/, "");
   if (vercel) {
     return vercel.startsWith("http") ? vercel : `https://${vercel}`;
+  }
+
+  // Public production fallback when env/host headers are wrong (shared hosting)
+  if (process.env.NODE_ENV === "production") {
+    return "https://patronbenikap.com";
   }
 
   return configured || "http://localhost:3000";
