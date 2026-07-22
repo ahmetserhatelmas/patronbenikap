@@ -182,25 +182,15 @@ export async function signUp(
   const onboardingPath =
     parsed.data.role === "company" ? "/firma/profil" : "/isci/profil";
 
-  // Email doğrulaması kapalıysa signUp oturum döndürür — direkt yönlendir
+  // Email onayı kapalıysa oturum gelir — panele yönlendir
   if (data.session) {
     redirect(onboardingPath);
   }
 
-  // Doğrulama açıksa oturum gelmez; şifreyle giriş yapmayı dene
-  const { error: signInError } = await supabase.auth.signInWithPassword({
-    email: parsed.data.email,
-    password: parsed.data.password,
-  });
-
-  if (!signInError) {
-    redirect(onboardingPath);
-  }
-
+  // Email onayı zorunlu: mail gitti, kullanıcı linke tıklayınca /callback
   return {
-    error:
-      "Otomatik giriş yapılamadı. Supabase Dashboard → Authentication → Sign In / Providers → Email altında 'Confirm email' ayarını kapat, sonra tekrar kayıt ol.",
-    values,
+    success:
+      "Kayıt alındı. E-posta adresine onay linki gönderdik. Maildeki butona tıklayınca hesabın açılır.",
   };
 }
 
