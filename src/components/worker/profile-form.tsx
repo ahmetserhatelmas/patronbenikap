@@ -125,11 +125,11 @@ export function WorkerProfileForm({
     if (v.last_name != null) setLastName(v.last_name);
     if (v.age != null) setAge(digitsOnly(v.age));
     if (v.district != null) setDistrict(v.district);
-    if (v.city != null) setCity(v.city);
-    if (v.profession_id != null) setProfessionId(v.profession_id);
-    if (v.education != null) setEducation(v.education);
-    if (v.availability != null) setAvailability(v.availability);
-    if (v.military_status != null) setMilitary(v.military_status);
+    if (v.city != null) setCity(v.city || "");
+    if (v.profession_id != null) setProfessionId(v.profession_id || "");
+    if (v.education != null) setEducation(v.education || "");
+    if (v.availability != null) setAvailability(v.availability || "");
+    if (v.military_status != null) setMilitary(v.military_status || "");
     if (v.experience_years != null) setExperience(digitsOnly(v.experience_years));
     if (v.expected_salary != null) setSalary(digitsOnly(v.expected_salary));
     if (v.about_me != null) setAboutMe(v.about_me);
@@ -198,11 +198,11 @@ export function WorkerProfileForm({
         value={String(currentlyWorking)}
       />
       <input type="hidden" name="shift_work" value={String(shiftWork)} />
-      <input type="hidden" name="profession_id" value={professionId} />
-      <input type="hidden" name="city" value={city} />
-      <input type="hidden" name="education" value={education} />
-      <input type="hidden" name="availability" value={availability} />
-      <input type="hidden" name="military_status" value={military} />
+      <input type="hidden" name="profession_id" value={professionId ?? ""} />
+      <input type="hidden" name="city" value={city ?? ""} />
+      <input type="hidden" name="education" value={education ?? ""} />
+      <input type="hidden" name="availability" value={availability ?? ""} />
+      <input type="hidden" name="military_status" value={military ?? ""} />
       {selectedSkills.map((id) => (
         <input key={id} type="hidden" name="skill_ids" value={id} />
       ))}
@@ -281,7 +281,10 @@ export function WorkerProfileForm({
             <Label className={errors.city ? "text-destructive" : undefined}>
               Şehir *
             </Label>
-            <Select value={city || undefined} onValueChange={setCity}>
+            <Select
+              value={city || undefined}
+              onValueChange={(v) => setCity(v || "")}
+            >
               <SelectTrigger className={errors.city ? "border-destructive" : ""}>
                 <SelectValue placeholder="Şehir seç" />
               </SelectTrigger>
@@ -317,7 +320,7 @@ export function WorkerProfileForm({
             </Label>
             <Select
               value={professionId || undefined}
-              onValueChange={setProfessionId}
+              onValueChange={(v) => setProfessionId(v || "")}
             >
               <SelectTrigger
                 className={errors.profession_id ? "border-destructive" : ""}
@@ -365,7 +368,7 @@ export function WorkerProfileForm({
             >
               Beklenen maaş (TL)
             </Label>
-            <input type="hidden" name="expected_salary" value={salary} />
+            <input type="hidden" name="expected_salary" value={salary ?? ""} />
             <Input
               id="expected_salary_display"
               inputMode="numeric"
@@ -381,7 +384,10 @@ export function WorkerProfileForm({
           </div>
           <div className="space-y-2">
             <Label>Eğitim</Label>
-            <Select value={education || undefined} onValueChange={setEducation}>
+            <Select
+              value={education || undefined}
+              onValueChange={(v) => setEducation(v || "")}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Seviye seç" />
               </SelectTrigger>
@@ -398,7 +404,7 @@ export function WorkerProfileForm({
             <Label>Müsaitlik</Label>
             <Select
               value={availability || undefined}
-              onValueChange={setAvailability}
+              onValueChange={(v) => setAvailability(v || "")}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seç" />
@@ -414,7 +420,10 @@ export function WorkerProfileForm({
           </div>
           <div className="space-y-2">
             <Label>Askerlik</Label>
-            <Select value={military || undefined} onValueChange={setMilitary}>
+            <Select
+              value={military || undefined}
+              onValueChange={(v) => setMilitary(v || "")}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Seç" />
               </SelectTrigger>
@@ -576,7 +585,7 @@ export function WorkerProfileForm({
               <p className="text-xs text-destructive">{errors.phone}</p>
             )}
             {/* WhatsApp = telefon; ayrı alan yok */}
-            <input type="hidden" name="whatsapp" value={phone} />
+            <input type="hidden" name="whatsapp" value={phone ?? ""} />
           </div>
           <Field
             label="E-posta"

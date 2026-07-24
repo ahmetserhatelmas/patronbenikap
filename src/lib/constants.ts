@@ -146,6 +146,16 @@ export const SECTORS = [
   "Diğer",
 ] as const;
 
+export const BLOG_CATEGORIES = {
+  "meslek-rehberi": "Meslek rehberi",
+  "maas-rehberi": "Maaş rehberi",
+  "kariyer-ipuclari": "Kariyer ipuçları",
+  "is-arama": "İş arama",
+  "firma-rehberi": "Firma rehberi",
+} as const;
+
+export type BlogCategory = keyof typeof BLOG_CATEGORIES;
+
 export const FAQ_ITEMS = [
   {
     q: "Patron Beni Kap nedir?",

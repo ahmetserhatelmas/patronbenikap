@@ -10,6 +10,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/giris`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/firma/ara`, changeFrequency: "hourly", priority: 0.9 },
     { url: `${base}/blog`, changeFrequency: "weekly", priority: 0.8 },
+    {
+      url: `${base}/blog/kategori/meslek-rehberi`,
+      changeFrequency: "weekly",
+      priority: 0.65,
+    },
+    {
+      url: `${base}/blog/kategori/maas-rehberi`,
+      changeFrequency: "weekly",
+      priority: 0.65,
+    },
+    {
+      url: `${base}/blog/kategori/kariyer-ipuclari`,
+      changeFrequency: "weekly",
+      priority: 0.65,
+    },
+    {
+      url: `${base}/blog/kategori/is-arama`,
+      changeFrequency: "weekly",
+      priority: 0.65,
+    },
+    {
+      url: `${base}/blog/kategori/firma-rehberi`,
+      changeFrequency: "weekly",
+      priority: 0.65,
+    },
   ];
 
   try {
@@ -40,7 +65,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${base}/blog/${p.slug}`,
         lastModified: new Date(p.updated_at),
         changeFrequency: "monthly" as const,
-        priority: 0.6,
+        priority: 0.7,
       })) ?? [];
 
     return [...staticPages, ...workerPages, ...blogPages];
