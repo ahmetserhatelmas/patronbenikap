@@ -9,8 +9,8 @@ interface PageProps {
   params: Promise<{ category: string }>;
 }
 
-function isBlogCategory(value: string): value is BlogCategory {
-  return value in BLOG_CATEGORIES;
+function isBlogCategory(value: unknown): value is BlogCategory {
+  return typeof value === "string" && value in BLOG_CATEGORIES;
 }
 
 export async function generateMetadata({

@@ -13,8 +13,8 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-function isBlogCategory(value: string): value is BlogCategory {
-  return value in BLOG_CATEGORIES;
+function isBlogCategory(value: unknown): value is BlogCategory {
+  return typeof value === "string" && value in BLOG_CATEGORIES;
 }
 
 export async function generateMetadata({
@@ -71,10 +71,9 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   if (!post) notFound();
 
-  const category =
-    typeof post.category === "string" && isBlogCategory(post.category)
-      ? post.category
-      : null;
+  const category: BlogCategory | null = isBlogCategory(post.category)
+    ? post.category
+    : null;
   const categoryLabel = category ? BLOG_CATEGORIES[category] : null;
 
   let related: {

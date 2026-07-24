@@ -27,8 +27,8 @@ interface PageProps {
   searchParams: Promise<{ kategori?: string }>;
 }
 
-function isBlogCategory(value: string): value is BlogCategory {
-  return value in BLOG_CATEGORIES;
+function isBlogCategory(value: unknown): value is BlogCategory {
+  return typeof value === "string" && value in BLOG_CATEGORIES;
 }
 
 export default async function BlogPage({ searchParams }: PageProps) {
